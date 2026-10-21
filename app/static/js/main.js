@@ -59,6 +59,10 @@ const ROUTE_LIMITS = {
 
 document.addEventListener("DOMContentLoaded", async () => {
     try {
+        const yearEl = document.getElementById("copyrightYear");
+        if (yearEl) {
+            yearEl.textContent = new Date().getFullYear();
+        }
         await loadSpeciesData();
         setupEventListeners();
         calculateAnimalToHuman();

@@ -147,3 +147,24 @@ If you want the website to be online 24/7 without keeping your computer running:
 
 ## Regulatory and Scientific Safety Disclaimer
 > **IMPORTANT**: ResearchDose is an academic calculation and educational tool intended for preclinical research and pharmacological experimental design. Interspecies dose conversion using Body Surface Area (BSA) normalization provides a mathematical estimate of equivalent systemic exposure. **It DOES NOT establish clinical safety, efficacy, or starting doses for clinical trials.** Human trials require determination of the No Observed Adverse Effect Level (NOAEL) in appropriate animal species, pharmacodynamic evaluations, and application of a safety margin (typically $\ge 10$-fold) in compliance with FDA CDER (2005) or ICH S9 guidance.
+
+---
+
+## 📄 Copyright & License
+
+**Copyright &copy; 2026 Arpita Patil / ResearchDose. All Rights Reserved.**
+
+This platform, including its calculation engine, responsive scientific interface, verified animal species datasets, and automated cohort scaling modules, is designed and developed by **Arpita Patil**.
+
+- **License**: Released under the [MIT License](LICENSE) for research, academic, and scientific education.
+- **Scientific Attribution**: Reference $K_m$ factors and body weights are standardized from US FDA CDER (2005) guidance, Reagan-Shaw et al. (2008), and Janhavi et al. (2022).
+- **Academic Citation**:
+  ```bibtex
+  @software{researchdose2026,
+    author = {Arpita Patil},
+    title = {ResearchDose: Preclinical Interspecies Dose Conversion & Research Platform},
+    year = {2026},
+    url = {https://github.com/ArpitaPatil20/ResearchDose}
+  }
+  ```
+
