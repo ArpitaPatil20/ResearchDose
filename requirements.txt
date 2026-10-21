@@ -1,0 +1,22 @@
+# Core Web Framework and Validation
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+pydantic>=2.8.0
+pydantic-settings>=2.4.0
+jinja2>=3.1.4
+python-multipart>=0.0.9
+python-dotenv>=1.0.1
+
+# Database & ORM (Local SQLite)
+sqlalchemy>=2.0.30
+
+# Data Processing & Numerical Precision
+pandas>=2.2.0
+
+# Scientific Visualization & Reporting
+matplotlib>=3.9.0
+reportlab>=4.2.0
+
+# Testing and Verification
+pytest>=8.2.0
+httpx>=0.27.0

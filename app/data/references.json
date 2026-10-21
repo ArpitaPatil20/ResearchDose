@@ -1,0 +1,87 @@
+[
+  {
+    "id": "fda-2005-starting-dose",
+    "title": "Estimating the Maximum Safe Starting Dose in Initial Clinical Trials for Therapeutics in Adult Healthy Volunteers",
+    "organization": "U.S. Food and Drug Administration (FDA) / CDER",
+    "publication_date": "2005-07",
+    "url": "https://www.fda.gov/regulatory-information/search-fda-guidance-documents/estimating-maximum-safe-starting-dose-initial-clinical-trials-therapeutics-adult-healthy-volunteers",
+    "doi": null,
+    "method_supported": "BSA/Km Normalization Interspecies Scaling",
+    "summary": "Authoritative regulatory guidance establishing standard reference body weights, body surface areas, and Km factors (Table 1) for converting animal doses to human equivalent doses (HED).",
+    "verification_status": "verified",
+    "notes": "Standard reference standard for Table 1 Km factors (Human 37, Mouse 3, Rat 6, Guinea pig 8, Rabbit 12, Dog 20, Monkeys 12, Mini-pig 27)."
+  },
+  {
+    "id": "reagan-shaw-2008",
+    "title": "Dose translation from animal to human studies revisited",
+    "organization": "The FASEB Journal",
+    "publication_date": "2008-03",
+    "url": "https://doi.org/10.1096/fj.07-9574LSF",
+    "doi": "10.1096/fj.07-9574LSF",
+    "method_supported": "BSA/Km Normalization and Direct Scaling Comparison",
+    "summary": "Seminal peer-reviewed paper revisiting species dose translation, standardizing the formula Target Dose = Source Dose * (Km_source / Km_target), and contrasting BSA scaling with simple mg/kg scaling.",
+    "verification_status": "verified",
+    "notes": "Reinforces that direct mg/kg equivalence without BSA normalization can lead to dramatic overdosing in larger species."
+  },
+  {
+    "id": "nair-jacob-2016",
+    "title": "A simple practice guide for dose conversion between animals and human",
+    "organization": "Journal of Basic and Clinical Pharmacy",
+    "publication_date": "2016-03",
+    "url": "https://doi.org/10.4103/0976-0105.177703",
+    "doi": "10.4103/0976-0105.177703",
+    "method_supported": "Interspecies Dose Translation and Multi-Species Calculations",
+    "summary": "Practical tutorial and reference guide on performing animal-to-human, human-to-animal, and animal-to-animal dose conversions with detailed arithmetic walkthroughs.",
+    "verification_status": "verified",
+    "notes": "Provides standard reference tables and practical worked examples across laboratory rodent and non-rodent species."
+  },
+  {
+    "id": "icmr-nipcr-dosemate",
+    "title": "DoseMate — Dose Conversion Calculator",
+    "organization": "ICMR-National Institute of Pathology (NIPCR)",
+    "publication_date": "2023-01",
+    "url": "https://nipcr.icmr.gov.in/dose-conversion-calculator/",
+    "doi": null,
+    "method_supported": "Laboratory Preclinical Dose Conversion",
+    "summary": "Institutional reference application for preclinical researchers to compute interspecies doses in compliance with ICMR ethical and experimental standards.",
+    "verification_status": "verified",
+    "notes": "Used as functional and validation benchmark for laboratory species reference profiles."
+  },
+  {
+    "id": "nc3rs-exposure-dose",
+    "title": "Exposure and Dose Selection Guidance",
+    "organization": "National Centre for the Replacement, Refinement and Reduction of Animals in Research (NC3Rs, UK)",
+    "publication_date": "2021-06",
+    "url": "https://nc3rs.org.uk/3rs-resource-library/exposure-and-dose-selection",
+    "doi": null,
+    "method_supported": "3Rs Experimental Design & Exposure-Based Dosing Principles",
+    "summary": "Guidelines emphasizing pharmacokinetic exposure rather than arbitrary dose scaling, warning against uncritical BSA extrapolation for non-linear kinetics or biologic therapeutics.",
+    "verification_status": "verified",
+    "notes": "Provides critical context on limitations, non-linear kinetics, plasma protein binding, and formulation limits."
+  },
+  {
+    "id": "nc3rs-eda-characteristics",
+    "title": "Animal Characteristics: Body Weight, Strain, Sex, and Age Guidelines",
+    "organization": "NC3Rs Experimental Design Assistant (EDA)",
+    "publication_date": "2020-09",
+    "url": "https://eda.nc3rs.org.uk/experimental-design-animal-characteristics",
+    "doi": null,
+    "method_supported": "Biological Variance and Baseline Physiology",
+    "summary": "Detailed reference on standard baseline body weights, physiological variability, and the risk of treating all animal strains or ages as interchangeable.",
+    "verification_status": "verified",
+    "notes": "Underpins our requirement that reference body weights must not be conflated with actual subject weights."
+  },
+  {
+    "id": "cftri-dosecal-2022",
+    "title": "DoseCal: a virtual calculator for dosage conversion between human and different animal species",
+    "organization": "CSIR-Central Food Technological Research Institute (CFTRI) / Archives of Physiology and Biochemistry",
+    "publication_date": "2022-04",
+    "url": "https://dosecal.cftri.res.in/index.php",
+    "doi": "10.1080/13813455.2019.1687522",
+    "method_supported": "Virtual Laboratory Interspecies Dose Calculation",
+    "summary": "Specialized virtual online calculator developed by CSIR-CFTRI, Mysuru, for bidirectional dose conversion between human and laboratory animals based on BSA allometric Km correction.",
+    "verification_status": "verified",
+    "notes": "Foundational benchmark for bidirectional laboratory animal and human dosage calculation with actual subject body weights."
+  }
+]
+

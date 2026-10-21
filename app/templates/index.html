@@ -1,0 +1,1059 @@
+{% extends "base.html" %}
+
+{% block title %}ResearchDose — Scientific Preclinical Dose Conversion & Research Platform{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-card p-3 p-md-5 mb-4">
+    <div class="row align-items-center">
+        <div class="col-lg-8">
+            <span class="badge bg-primary-subtle text-primary border border-primary-subtle mb-2 px-3 py-1 fw-semibold">
+                <i class="bi bi-cpu me-1"></i> Preclinical Pharmacology Engine
+            </span>
+            <h1 class="fw-bold text-dark mb-2 fs-2 fs-md-1">Scientific Interspecies Dose Conversion</h1>
+            <p class="lead text-secondary mb-3 fs-6">
+                Scientifically responsible dose translation between human, rodent, carnivore, lagomorph, and nonhuman primate models.
+                Built on body surface area (BSA) and metabolic $K_m$ normalization with rigorous provenance (FDA 2005 & CSIR-CFTRI DoseCal).
+            </p>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="#calculator-suite" class="btn btn-primary px-3 shadow-sm flex-grow-1 flex-sm-grow-0">
+                    <i class="bi bi-calculator me-1"></i> Open Dose Calculator
+                </a>
+                <a href="#comparison-matrix" class="btn btn-outline-primary px-3 flex-grow-1 flex-sm-grow-0">
+                    <i class="bi bi-grid-3x3-gap me-1"></i> Multi-Species Matrix
+                </a>
+                <a href="#species-section" class="btn btn-outline-secondary px-3 flex-grow-1 flex-sm-grow-0">
+                    <i class="bi bi-table me-1"></i> Species Dataset
+                </a>
+                <a href="/docs" target="_blank" class="btn btn-outline-dark px-3 flex-grow-1 flex-sm-grow-0">
+                    <i class="bi bi-terminal me-1"></i> REST API Specs
+                </a>
+            </div>
+        </div>
+        <div class="col-lg-4 mt-3 mt-lg-0 text-center">
+            <div class="p-3 bg-white rounded-3 border shadow-sm text-start">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="small text-muted fw-semibold uppercase"><i class="bi bi-activity text-success me-1"></i> Engine Status</span>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle">Online & Verified</span>
+                </div>
+                <div class="small mb-1"><strong>Engine Version:</strong> 1.0.0</div>
+                <div class="small mb-1"><strong>Standards:</strong> US FDA CDER 2005 Table 1</div>
+                <div class="small mb-1"><strong>Reference:</strong> CSIR-CFTRI DoseCal Benchmark</div>
+                <div class="small mb-1"><strong>Verification:</strong> 100% Traceable Citations</div>
+                <hr class="my-2">
+                <div class="small text-muted fst-italic">Zero guessed factors. Allometric formulas strictly proven.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Key Metric Cards (2x2 on Mobile, 4-col on Desktop) -->
+<div class="row g-2 g-md-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="stat-card h-100">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="stat-label">Verified Models</span>
+                <i class="bi bi-bookmark-check text-primary fs-5 fs-sm-4"></i>
+            </div>
+            <div class="stat-value">{{ species_list|length - 1 }}</div>
+            <small class="text-success d-none d-sm-inline-block"><i class="bi bi-check2-circle"></i> FDA Table 1 standard</small>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card h-100">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="stat-label">Conversion</span>
+                <i class="bi bi-grid-3x3-gap text-cyan fs-5 fs-sm-4"></i>
+            </div>
+            <div class="stat-value">BSA / $K_m$</div>
+            <small class="text-secondary d-none d-sm-inline-block"><i class="bi bi-info-circle"></i> Allometric surface scaling</small>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card h-100">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="stat-label">References</span>
+                <i class="bi bi-journal-text text-indigo fs-5 fs-sm-4"></i>
+            </div>
+            <div class="stat-value">{{ references|length }}</div>
+            <small class="text-primary d-none d-sm-inline-block"><i class="bi bi-link-45deg"></i> Peer-reviewed & regulatory</small>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card h-100">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="stat-label">Precision</span>
+                <i class="bi bi-shield-shaded text-success fs-5 fs-sm-4"></i>
+            </div>
+            <div class="stat-value">Decimal</div>
+            <small class="text-muted d-none d-sm-inline-block"><i class="bi bi-check-all"></i> Zero floating-point drift</small>
+        </div>
+    </div>
+</div>
+
+<!-- Scientific Disclaimer Notice -->
+<div class="disclaimer-box mb-4 shadow-sm">
+    <div class="d-flex gap-2">
+        <i class="bi bi-exclamation-triangle-fill fs-5 flex-shrink-0 text-warning"></i>
+        <div>
+            <strong>Preclinical Pharmacology & Research Calculation Aid:</strong>
+            <p class="mb-0 mt-1 small">
+                {{ disclaimer }}
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================== -->
+<!-- INTERACTIVE SCIENTIFIC DOSE CONVERSION SUITE                    -->
+<!-- ============================================================== -->
+<div id="calculator-suite" class="calc-suite-container mb-5">
+    <div class="calc-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <div>
+            <h4 class="fw-bold mb-1"><i class="bi bi-calculator me-2 text-cyan"></i> Preclinical Dose Conversion & Formulation Suite</h4>
+            <div class="small text-light opacity-75">
+                Bidirectional animal-to-human, human-to-animal, cohort study requirements, and liquid formulation volume calculation.
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <button type="button" class="btn btn-sm btn-outline-light d-none d-sm-inline-block" onclick="window.print()">
+                <i class="bi bi-printer me-1"></i> Print Protocol
+            </button>
+        </div>
+    </div>
+
+    <!-- Quick Presets Bar (Horizontal Swipeable Rail on Mobile) -->
+    <div class="p-2 p-md-3 bg-light border-bottom presets-scroll-rail">
+        <span class="small fw-bold text-secondary me-1 align-self-center"><i class="bi bi-lightning-charge-fill text-warning"></i> Presets:</span>
+        <button type="button" class="preset-chip" onclick="applyPreset('mouse_10_human')">
+            <i class="bi bi-arrow-right-short"></i> Mouse 10 mg/kg → Human
+        </button>
+        <button type="button" class="preset-chip" onclick="applyPreset('rat_50_human')">
+            <i class="bi bi-arrow-right-short"></i> Rat 50 mg/kg → Human
+        </button>
+        <button type="button" class="preset-chip" onclick="applyPreset('human_500_mouse')">
+            <i class="bi bi-arrow-right-short"></i> Human 500mg → Mouse 25g
+        </button>
+        <button type="button" class="preset-chip" onclick="applyPreset('rabbit_20_rat')">
+            <i class="bi bi-arrow-right-short"></i> Rabbit 20 mg/kg → Rat
+        </button>
+        <button type="button" class="preset-chip" onclick="applyPreset('dog_10_human')">
+            <i class="bi bi-arrow-right-short"></i> Dog 10 mg/kg → Human
+        </button>
+        <button type="button" class="preset-chip" onclick="applyPreset('cohort_mouse_study')">
+            <i class="bi bi-people-fill"></i> 10 Mice Cohort Study
+        </button>
+    </div>
+
+    <!-- Suite Tabs Navigation (Horizontal Rail on Mobile) -->
+    <div class="p-2 p-md-3 bg-white border-bottom">
+        <ul class="nav nav-pills nav-pills-scientific flex-row" id="calcTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="tab-a2h-btn" data-bs-toggle="pill" data-bs-target="#tab-a2h" type="button" role="tab">
+                    <i class="bi bi-box-arrow-right me-1"></i> Animal → Human (HED)
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-h2a-btn" data-bs-toggle="pill" data-bs-target="#tab-h2a" type="button" role="tab">
+                    <i class="bi bi-arrow-left-right me-1"></i> Human → Animal Dose
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-a2a-btn" data-bs-toggle="pill" data-bs-target="#tab-a2a" type="button" role="tab">
+                    <i class="bi bi-repeat me-1"></i> Animal → Animal
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-cohort-btn" data-bs-toggle="pill" data-bs-target="#tab-cohort" type="button" role="tab">
+                    <i class="bi bi-diagram-3-fill me-1"></i> Dose per kg & Cohort
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-form-btn" data-bs-toggle="pill" data-bs-target="#tab-form" type="button" role="tab">
+                    <i class="bi bi-droplet-half me-1"></i> Solution & Volume
+                </button>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Tab Contents -->
+    <div class="tab-content p-2 p-sm-3 p-md-4" id="calcTabContent">
+        
+        <!-- ========================================== -->
+        <!-- TAB 1: ANIMAL TO HUMAN (HED CALCULATOR)    -->
+        <!-- ========================================== -->
+        <div class="tab-pane fade show active" id="tab-a2h" role="tabpanel">
+            <div class="row g-3 g-md-4">
+                <div class="col-lg-6">
+                    <div class="p-3 bg-light rounded-3 border h-100">
+                        <h6 class="fw-bold text-dark mb-3">
+                            <i class="bi bi-sliders text-primary me-2"></i> Input Parameters (Source Animal & Human)
+                        </h6>
+
+                        <div class="mb-3">
+                            <label class="form-label-scientific" for="a2h_animal">
+                                <span>Source Laboratory Animal:</span>
+                                <span class="badge bg-secondary-subtle text-secondary small">FDA Table 1</span>
+                            </label>
+                            <select id="a2h_animal" class="form-select form-select-scientific">
+                                <option value="mouse" selected>Mouse (Mus musculus) — Km = 3, Ref: 20 g</option>
+                                <option value="rat">Rat (Rattus norvegicus) — Km = 6, Ref: 150 g</option>
+                                <option value="hamster">Hamster (Golden Syrian) — Km = 5, Ref: 80 g</option>
+                                <option value="guinea_pig">Guinea Pig (Cavia porcellus) — Km = 8, Ref: 400 g</option>
+                                <option value="ferret">Ferret (Mustela putorius furo) — Km = 7, Ref: 300 g</option>
+                                <option value="rabbit">Rabbit (New Zealand White) — Km = 12, Ref: 1.8 kg</option>
+                                <option value="cat">Cat (Felis catus) — Km = 12, Ref: 2.0 kg</option>
+                                <option value="dog">Dog (Beagle) — Km = 20, Ref: 10 kg</option>
+                                <option value="monkey_marmoset">Monkey (Marmoset) — Km = 6, Ref: 350 g</option>
+                                <option value="monkey_squirrel">Monkey (Squirrel) — Km = 7, Ref: 600 g</option>
+                                <option value="monkey_cynomolgus">Monkey (Cynomolgus) — Km = 12, Ref: 2.4 kg</option>
+                                <option value="monkey_rhesus">Monkey (Rhesus) — Km = 12, Ref: 3.2 kg</option>
+                                <option value="baboon">Baboon (Papio anubis) — Km = 20, Ref: 12 kg</option>
+                                <option value="micro_pig">Micro-pig (Sus domesticus) — Km = 21, Ref: 8 kg</option>
+                                <option value="mini_pig">Miniature Swine (Mini-pig) — Km = 27, Ref: 20 kg</option>
+                            </select>
+                        </div>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-7 col-sm-7">
+                                <label class="form-label-scientific" for="a2h_dose">Animal Tested Dose:</label>
+                                <input type="number" id="a2h_dose" class="form-control form-control-scientific" value="10" min="0.0001" step="any" inputmode="decimal">
+                            </div>
+                            <div class="col-5 col-sm-5">
+                                <label class="form-label-scientific" for="a2h_dose_unit">Dose Unit:</label>
+                                <select id="a2h_dose_unit" class="form-select form-select-scientific">
+                                    <option value="mg_kg" selected>mg/kg</option>
+                                    <option value="ug_kg">µg/kg</option>
+                                    <option value="g_kg">g/kg</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-7 col-sm-7">
+                                <label class="form-label-scientific" for="a2h_animal_weight">Animal Body Weight:</label>
+                                <input type="number" id="a2h_animal_weight" class="form-control form-control-scientific" value="20" min="0.0001" step="any" inputmode="decimal">
+                            </div>
+                            <div class="col-5 col-sm-5">
+                                <label class="form-label-scientific" for="a2h_animal_weight_unit">Weight Unit:</label>
+                                <select id="a2h_animal_weight_unit" class="form-select form-select-scientific">
+                                    <option value="g" selected>grams (g)</option>
+                                    <option value="kg">kg</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-7 col-sm-7">
+                                <label class="form-label-scientific" for="a2h_human_weight">Human Weight (kg):</label>
+                                <input type="number" id="a2h_human_weight" class="form-control form-control-scientific" value="60" min="1" step="any" inputmode="decimal">
+                            </div>
+                            <div class="col-5 col-sm-5">
+                                <label class="form-label-scientific" for="a2h_safety_factor">Safety Factor:</label>
+                                <select id="a2h_safety_factor" class="form-select form-select-scientific">
+                                    <option value="1.0">1× (Direct HED)</option>
+                                    <option value="10.0" selected>10× (FDA MRSD)</option>
+                                    <option value="20.0">20× (Conservative)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="p-2 bg-white rounded border">
+                            <span class="small text-muted fw-semibold">Quick Human Weight Presets:</span>
+                            <div class="d-flex flex-wrap gap-1 mt-1">
+                                <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2 small flex-grow-1 flex-sm-grow-0" onclick="setValue('a2h_human_weight', '60'); calculateAnimalToHuman();">60 kg (Adult Standard)</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2 small flex-grow-1 flex-sm-grow-0" onclick="setValue('a2h_human_weight', '70'); calculateAnimalToHuman();">70 kg (Average)</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2 small flex-grow-1 flex-sm-grow-0" onclick="setValue('a2h_human_weight', '50'); calculateAnimalToHuman();">50 kg</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2 small flex-grow-1 flex-sm-grow-0" onclick="setValue('a2h_human_weight', '20'); calculateAnimalToHuman();">20 kg (Child)</button>
+                            </div>
+                        </div>
+
+                        <hr class="my-3">
+
+                        <!-- Optional Formulation Volume in Animal -->
+                        <div class="row g-2">
+                            <div class="col-7 col-sm-6">
+                                <label class="form-label-scientific" for="a2h_conc">Stock Conc (mg/mL):</label>
+                                <input type="number" id="a2h_conc" class="form-control form-control-scientific" placeholder="Optional" min="0" step="any" inputmode="decimal">
+                            </div>
+                            <div class="col-5 col-sm-6">
+                                <label class="form-label-scientific" for="a2h_route">Admin Route:</label>
+                                <select id="a2h_route" class="form-select form-select-scientific">
+                                    <option value="oral_gavage" selected>Oral Gavage (p.o.)</option>
+                                    <option value="ip">Intraperitoneal (i.p.)</option>
+                                    <option value="iv_bolus">Intravenous (i.v.)</option>
+                                    <option value="sc">Subcutaneous (s.c.)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="result-card-primary h-100 p-3 p-md-4 d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="badge bg-primary text-white px-2 py-1">
+                                    <i class="bi bi-check-circle me-1"></i> Calculated Result
+                                </span>
+                                <span class="small text-muted font-mono" id="a2h_res_km_ratio">Km Ratio: --</span>
+                            </div>
+
+                            <!-- Primary Output Box -->
+                            <div class="result-metric-box mb-3">
+                                <div class="text-muted small fw-semibold text-uppercase mb-1">Human Equivalent Dose (HED)</div>
+                                <div class="result-metric-val" id="a2h_res_hed_mg_kg">0.8108 mg/kg</div>
+                                <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
+                                    <span class="text-secondary small">Total Human Drug Mass:</span>
+                                    <span class="fw-bold fs-5 text-dark font-mono" id="a2h_res_total_mg">48.65 mg</span>
+                                </div>
+                                <div class="mt-1 small text-danger font-mono" id="a2h_res_diff">
+                                    -91.9% vs direct mg/kg
+                                </div>
+                            </div>
+
+                            <!-- MRSD Container (If safety factor applied) -->
+                            <div id="a2h_mrsd_container" class="p-3 bg-warning bg-opacity-10 rounded border border-warning mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="fw-bold text-dark small"><i class="bi bi-shield-lock-fill text-warning me-1"></i> Max Recommended Starting Dose (MRSD)</span>
+                                    <span class="badge bg-warning text-dark small" id="a2h_mrsd_factor_label">10× Safety Factor</span>
+                                </div>
+                                <div class="row align-items-center">
+                                    <div class="col-6">
+                                        <div class="result-metric-val-warning" id="a2h_res_mrsd_mg_kg">0.0811 mg/kg</div>
+                                    </div>
+                                    <div class="col-6 text-end">
+                                        <div class="small text-muted">Total Clinical Dose:</div>
+                                        <div class="fw-bold fs-6 text-dark font-mono" id="a2h_res_mrsd_total_mg">4.86 mg</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Formulation Volume Check -->
+                            <div id="a2h_volume_box" class="p-3 bg-light rounded border mb-3" style="display:none;">
+                                <div class="small fw-bold text-dark mb-1"><i class="bi bi-droplet-fill text-primary me-1"></i> Animal Dosing Volume:</div>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-muted small">Administration Volume:</span>
+                                    <span class="font-mono fw-bold text-primary" id="a2h_res_vol_ml">--</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-muted small">Dosing Volume Rate:</span>
+                                    <span class="font-mono fw-bold" id="a2h_res_vol_rate">--</span>
+                                </div>
+                                <div id="a2h_welfare_badge"></div>
+                            </div>
+
+                            <!-- Arithmetic Audit Accordion -->
+                            <div class="steps-accordion">
+                                <div class="fw-bold text-dark small mb-2"><i class="bi bi-diagram-2 text-primary me-1"></i> Step-by-Step Mathematical Derivation:</div>
+                                <div id="a2h_steps_list">
+                                    <!-- Rendered dynamically -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pt-3 mt-3 border-top d-flex flex-wrap justify-content-between align-items-center gap-2">
+                            <span class="small text-muted"><i class="bi bi-journal-check text-success"></i> FDA CDER (2005) & Reagan-Shaw (2008)</span>
+                            <div class="d-flex gap-1">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="copyA2HSteps(this)">
+                                    <i class="bi bi-clipboard me-1"></i> Copy Steps
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 2: HUMAN TO ANIMAL DOSE TRANSLATION    -->
+        <!-- ========================================== -->
+        <div class="tab-pane fade" id="tab-h2a" role="tabpanel">
+            <div class="row g-3 g-md-4">
+                <div class="col-lg-6">
+                    <div class="p-3 bg-light rounded-3 border h-100">
+                        <h6 class="fw-bold text-dark mb-3">
+                            <i class="bi bi-person-fill-gear text-primary me-2"></i> Clinical Human Dose & Target Laboratory Animal
+                        </h6>
+
+                        <div class="mb-3">
+                            <label class="form-label-scientific" for="h2a_dose_type">Human Dose Specification:</label>
+                            <select id="h2a_dose_type" class="form-select form-select-scientific">
+                                <option value="mg_kg">Dose in mg/kg</option>
+                                <option value="total_mg" selected>Total Clinical Dose in mg (e.g. tablet: 500 mg)</option>
+                            </select>
+                        </div>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-7 col-sm-7">
+                                <label class="form-label-scientific" for="h2a_human_dose">Human Dose Amount:</label>
+                                <input type="number" id="h2a_human_dose" class="form-control form-control-scientific" value="500" min="0.001" step="any" inputmode="decimal">
+                            </div>
+                            <div class="col-5 col-sm-5">
+                                <label class="form-label-scientific" for="h2a_human_weight">Human Weight (kg):</label>
+                                <input type="number" id="h2a_human_weight" class="form-control form-control-scientific" value="60" min="1" step="any" inputmode="decimal">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label-scientific" for="h2a_target_animal">Target Laboratory Animal:</label>
+                            <select id="h2a_target_animal" class="form-select form-select-scientific">
+                                <option value="mouse" selected>Mouse (Mus musculus) — Km = 3, Ref: 20 g</option>
+                                <option value="rat">Rat (Rattus norvegicus) — Km = 6, Ref: 150 g</option>
+                                <option value="hamster">Hamster (Golden Syrian) — Km = 5, Ref: 80 g</option>
+                                <option value="guinea_pig">Guinea Pig (Cavia porcellus) — Km = 8, Ref: 400 g</option>
+                                <option value="ferret">Ferret (Mustela putorius furo) — Km = 7, Ref: 300 g</option>
+                                <option value="rabbit">Rabbit (New Zealand White) — Km = 12, Ref: 1.8 kg</option>
+                                <option value="cat">Cat (Felis catus) — Km = 12, Ref: 2.0 kg</option>
+                                <option value="dog">Dog (Beagle) — Km = 20, Ref: 10 kg</option>
+                                <option value="monkey_cynomolgus">Monkey (Cynomolgus) — Km = 12, Ref: 2.4 kg</option>
+                                <option value="monkey_rhesus">Monkey (Rhesus) — Km = 12, Ref: 3.2 kg</option>
+                                <option value="mini_pig">Miniature Swine (Mini-pig) — Km = 27, Ref: 20 kg</option>
+                            </select>
+                        </div>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-7 col-sm-7">
+                                <label class="form-label-scientific" for="h2a_animal_weight">Animal Actual Weight:</label>
+                                <input type="number" id="h2a_animal_weight" class="form-control form-control-scientific" value="25" min="0.001" step="any" inputmode="decimal">
+                            </div>
+                            <div class="col-5 col-sm-5">
+                                <label class="form-label-scientific" for="h2a_animal_weight_unit">Weight Unit:</label>
+                                <select id="h2a_animal_weight_unit" class="form-select form-select-scientific">
+                                    <option value="g" selected>grams (g)</option>
+                                    <option value="kg">kg</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mb-2">
+                            <div class="col-7 col-sm-6">
+                                <label class="form-label-scientific" for="h2a_conc">Stock Conc (mg/mL):</label>
+                                <input type="number" id="h2a_conc" class="form-control form-control-scientific" placeholder="Optional" min="0" step="any" inputmode="decimal">
+                            </div>
+                            <div class="col-5 col-sm-6">
+                                <label class="form-label-scientific" for="h2a_route">Admin Route:</label>
+                                <select id="h2a_route" class="form-select form-select-scientific">
+                                    <option value="oral_gavage" selected>Oral Gavage (p.o.)</option>
+                                    <option value="ip">Intraperitoneal (i.p.)</option>
+                                    <option value="iv_bolus">Intravenous (i.v.)</option>
+                                    <option value="sc">Subcutaneous (s.c.)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="result-card-primary h-100 p-3 p-md-4 d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="badge text-white px-2 py-1" style="background-color: var(--rd-teal);">
+                                    <i class="bi bi-flask me-1"></i> Preclinical Animal Dose
+                                </span>
+                                <span class="small text-muted font-mono" id="h2a_res_km_ratio">Km Ratio: --</span>
+                            </div>
+
+                            <div class="result-metric-box mb-3">
+                                <div class="text-muted small fw-semibold text-uppercase mb-1">Target Animal Dose (mg/kg)</div>
+                                <div class="result-metric-val" id="h2a_res_dose_mg_kg">102.78 mg/kg</div>
+                                <hr class="my-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div class="small text-muted">Total Dose per Individual Animal:</div>
+                                        <div class="fw-bold fs-4 text-dark font-mono" id="h2a_res_total_mg">2.5694 mg</div>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="small text-muted">In Micrograms:</div>
+                                        <div class="font-mono text-primary fw-bold fs-5" id="h2a_res_total_ug">2569.4 µg</div>
+                                    </div>
+                                </div>
+                                <div class="small text-muted mt-1">For animal weighing: <span id="h2a_res_animal_wt">25 g</span></div>
+                            </div>
+
+                            <div id="h2a_volume_box" class="p-3 bg-light rounded border mb-3" style="display:none;">
+                                <div class="small fw-bold text-dark mb-1"><i class="bi bi-droplet-fill text-primary me-1"></i> Dosing Volume for this Animal:</div>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-muted small">Administration Volume:</span>
+                                    <span class="font-mono fw-bold text-primary" id="h2a_res_vol_ml">--</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-muted small">Volume Rate:</span>
+                                    <span class="font-mono fw-bold" id="h2a_res_vol_rate">--</span>
+                                </div>
+                                <div id="h2a_welfare_badge"></div>
+                            </div>
+
+                            <div class="steps-accordion">
+                                <div class="fw-bold text-dark small mb-2"><i class="bi bi-diagram-2 text-primary me-1"></i> Step-by-Step Mathematical Derivation:</div>
+                                <div id="h2a_steps_list">
+                                    <!-- Rendered dynamically -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pt-3 mt-3 border-top d-flex justify-content-between align-items-center">
+                            <span class="small text-muted"><i class="bi bi-shield-check text-success"></i> Strict Preclinical Allometry</span>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="copyH2ASteps(this)">
+                                <i class="bi bi-clipboard me-1"></i> Copy Steps
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 3: ANIMAL TO ANIMAL INTERSPECIES       -->
+        <!-- ========================================== -->
+        <div class="tab-pane fade" id="tab-a2a" role="tabpanel">
+            <div class="row g-3 g-md-4">
+                <div class="col-lg-6">
+                    <div class="p-3 bg-light rounded-3 border h-100">
+                        <h6 class="fw-bold text-dark mb-3">
+                            <i class="bi bi-repeat text-primary me-2"></i> Interspecies Preclinical Translation
+                        </h6>
+
+                        <div class="mb-3">
+                            <label class="form-label-scientific" for="a2a_source_animal">Source Animal:</label>
+                            <select id="a2a_source_animal" class="form-select form-select-scientific">
+                                <option value="mouse" selected>Mouse (Km = 3)</option>
+                                <option value="rat">Rat (Km = 6)</option>
+                                <option value="hamster">Hamster (Km = 5)</option>
+                                <option value="guinea_pig">Guinea Pig (Km = 8)</option>
+                                <option value="rabbit">Rabbit (Km = 12)</option>
+                                <option value="cat">Cat (Km = 12)</option>
+                                <option value="dog">Dog (Km = 20)</option>
+                                <option value="monkey_cynomolgus">Monkey Cynomolgus (Km = 12)</option>
+                            </select>
+                        </div>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-7 col-sm-7">
+                                <label class="form-label-scientific" for="a2a_source_dose">Source Dose (mg/kg):</label>
+                                <input type="number" id="a2a_source_dose" class="form-control form-control-scientific" value="20" min="0.001" step="any" inputmode="decimal">
+                            </div>
+                            <div class="col-5 col-sm-5">
+                                <label class="form-label-scientific" for="a2a_source_weight">Weight (g):</label>
+                                <input type="number" id="a2a_source_weight" class="form-control form-control-scientific" value="20" min="0.001" step="any" inputmode="decimal">
+                            </div>
+                        </div>
+
+                        <hr class="my-3">
+
+                        <div class="mb-3">
+                            <label class="form-label-scientific" for="a2a_target_animal">Target Animal:</label>
+                            <select id="a2a_target_animal" class="form-select form-select-scientific">
+                                <option value="mouse">Mouse (Km = 3)</option>
+                                <option value="rat" selected>Rat (Km = 6)</option>
+                                <option value="guinea_pig">Guinea Pig (Km = 8)</option>
+                                <option value="rabbit">Rabbit (Km = 12)</option>
+                                <option value="cat">Cat (Km = 12)</option>
+                                <option value="dog">Dog (Km = 20)</option>
+                                <option value="monkey_cynomolgus">Monkey Cynomolgus (Km = 12)</option>
+                            </select>
+                        </div>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-7 col-sm-7">
+                                <label class="form-label-scientific" for="a2a_target_weight">Target Weight:</label>
+                                <input type="number" id="a2a_target_weight" class="form-control form-control-scientific" value="200" min="0.001" step="any" inputmode="decimal">
+                            </div>
+                            <div class="col-5 col-sm-5">
+                                <label class="form-label-scientific" for="a2a_target_weight_unit">Weight Unit:</label>
+                                <select id="a2a_target_weight_unit" class="form-select form-select-scientific">
+                                    <option value="g" selected>grams (g)</option>
+                                    <option value="kg">kg</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-2">
+                            <label class="form-label-scientific" for="a2a_conc">Stock Conc (mg/mL):</label>
+                            <input type="number" id="a2a_conc" class="form-control form-control-scientific" placeholder="Optional" min="0" step="any" inputmode="decimal">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="result-card-primary h-100 p-3 p-md-4 d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="badge bg-primary text-white px-2 py-1">Target Preclinical Dose</span>
+                                <span class="small text-muted font-mono" id="a2a_res_km_ratio">Ratio: --</span>
+                            </div>
+
+                            <div class="result-metric-box mb-3">
+                                <div class="text-muted small fw-semibold text-uppercase mb-1">Target Equivalent Dose (mg/kg)</div>
+                                <div class="result-metric-val" id="a2a_res_dose_mg_kg">10.00 mg/kg</div>
+                                <hr class="my-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div class="small text-muted">Total Dose per Target Animal:</div>
+                                        <div class="fw-bold fs-4 text-dark font-mono" id="a2a_res_total_mg">2.00 mg</div>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="small text-muted">In Micrograms:</div>
+                                        <div class="font-mono text-primary fw-bold fs-5" id="a2a_res_total_ug">2000.0 µg</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="a2a_vol_box" class="p-3 bg-light rounded border mb-3" style="display:none;">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="small text-muted fw-semibold">Administration Volume:</span>
+                                    <span class="font-mono fw-bold text-primary" id="a2a_res_vol">--</span>
+                                </div>
+                            </div>
+
+                            <div class="steps-accordion">
+                                <div class="fw-bold text-dark small mb-2"><i class="bi bi-diagram-2 text-primary me-1"></i> Interspecies Math Steps:</div>
+                                <div id="a2a_steps_list"></div>
+                            </div>
+                        </div>
+
+                        <div class="pt-3 mt-3 border-top text-end">
+                            <span class="small text-muted">Preclinical Translation Model</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 4: DOSE PER KG & COHORT PLANNER        -->
+        <!-- ========================================== -->
+        <div class="tab-pane fade" id="tab-cohort" role="tabpanel">
+            <div class="row g-3 g-md-4">
+                <div class="col-lg-6">
+                    <div class="p-3 bg-light rounded-3 border h-100">
+                        <h6 class="fw-bold text-dark mb-3">
+                            <i class="bi bi-people-fill text-primary me-2"></i> Animal Study Cohort Specification
+                        </h6>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-7 col-sm-7">
+                                <label class="form-label-scientific" for="ch_species">Animal Species:</label>
+                                <select id="ch_species" class="form-select form-select-scientific">
+                                    <option value="mouse" selected>Mouse (standard 20 g)</option>
+                                    <option value="rat">Rat (standard 150-250 g)</option>
+                                    <option value="guinea_pig">Guinea Pig (400 g)</option>
+                                    <option value="rabbit">Rabbit (1.8 kg)</option>
+                                    <option value="dog">Dog (10 kg)</option>
+                                </select>
+                            </div>
+                            <div class="col-5 col-sm-5">
+                                <label class="form-label-scientific" for="ch_dose">Dose (mg/kg):</label>
+                                <input type="number" id="ch_dose" class="form-control form-control-scientific" value="10" min="0.001" step="any" inputmode="decimal">
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-6 col-sm-6">
+                                <label class="form-label-scientific" for="ch_count">Animals Count (N):</label>
+                                <input type="number" id="ch_count" class="form-control form-control-scientific" value="10" min="1" step="1" inputmode="numeric">
+                            </div>
+                            <div class="col-4 col-sm-4">
+                                <label class="form-label-scientific" for="ch_avg_weight">Avg Weight:</label>
+                                <input type="number" id="ch_avg_weight" class="form-control form-control-scientific" value="22" min="0.001" step="any" inputmode="decimal">
+                            </div>
+                            <div class="col-2 col-sm-2">
+                                <label class="form-label-scientific" for="ch_weight_unit">Unit:</label>
+                                <select id="ch_weight_unit" class="form-select form-select-scientific">
+                                    <option value="g" selected>g</option>
+                                    <option value="kg">kg</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-6 col-sm-6">
+                                <label class="form-label-scientific" for="ch_freq">Dosing Frequency:</label>
+                                <select id="ch_freq" class="form-select form-select-scientific">
+                                    <option value="1" selected>QD (Once daily)</option>
+                                    <option value="2">BID (Twice daily)</option>
+                                    <option value="3">TID (Three times daily)</option>
+                                </select>
+                            </div>
+                            <div class="col-6 col-sm-6">
+                                <label class="form-label-scientific" for="ch_days">Study Duration (Days):</label>
+                                <input type="number" id="ch_days" class="form-control form-control-scientific" value="14" min="1" step="1" inputmode="numeric">
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mb-2">
+                            <div class="col-6 col-sm-6">
+                                <label class="form-label-scientific" for="ch_waste">Waste Margin (%):</label>
+                                <input type="number" id="ch_waste" class="form-control form-control-scientific" value="10" min="0" max="50" step="1" inputmode="decimal">
+                            </div>
+                            <div class="col-6 col-sm-6">
+                                <label class="form-label-scientific" for="ch_conc">Stock Conc (mg/mL):</label>
+                                <input type="number" id="ch_conc" class="form-control form-control-scientific" value="1.0" min="0" step="any" inputmode="decimal">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="result-card-primary h-100 p-3 p-md-4 d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="badge bg-success text-white px-2 py-1">
+                                    <i class="bi bi-box-seam me-1"></i> Total Drug Mass Required
+                                </span>
+                                <span class="small text-muted">Study Protocol</span>
+                            </div>
+
+                            <div class="result-metric-box mb-3">
+                                <div class="text-muted small fw-semibold text-uppercase mb-1">Grand Total Active Drug Required (Inc. Waste)</div>
+                                <div class="result-metric-val" id="ch_res_grand_total_mg">33.88 mg</div>
+                                <div class="small text-muted mt-1">In Grams: <span class="fw-bold font-mono text-dark" id="ch_res_grand_total_g">0.0339 g</span></div>
+                                <hr class="my-2">
+                                <div class="row g-2 text-start small">
+                                    <div class="col-6">
+                                        <span class="text-muted">Single dose per animal:</span>
+                                        <div class="fw-bold font-mono text-dark" id="ch_res_single_mg">0.22 mg</div>
+                                    </div>
+                                    <div class="col-6">
+                                        <span class="text-muted">Daily cohort total:</span>
+                                        <div class="fw-bold font-mono text-dark" id="ch_res_daily_mg">2.20 mg/day</div>
+                                    </div>
+                                    <div class="col-6 mt-2">
+                                        <span class="text-muted">Net study total:</span>
+                                        <div class="fw-bold font-mono text-dark" id="ch_res_study_net_mg">30.80 mg</div>
+                                    </div>
+                                    <div class="col-6 mt-2">
+                                        <span class="text-muted">Dead-volume margin:</span>
+                                        <div class="fw-bold font-mono text-warning" id="ch_res_waste_mg">+3.08 mg</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="ch_res_volume_container" class="p-3 bg-light rounded border mb-3">
+                                <div class="small fw-bold text-dark mb-1"><i class="bi bi-eyedropper text-primary me-1"></i> Solution Volume Requirements:</div>
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="small text-muted">Single injection:</span>
+                                    <span class="font-mono fw-bold text-primary" id="ch_res_single_vol">0.220 mL per animal</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="small text-muted">Total stock to prepare:</span>
+                                    <span class="font-mono fw-bold text-success" id="ch_res_total_vol">33.9 mL total stock</span>
+                                </div>
+                            </div>
+
+                            <div class="p-3 bg-white rounded border">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="small fw-bold text-dark">Protocol Summary Text (for IACUC):</span>
+                                    <button type="button" class="btn btn-sm btn-link p-0 text-decoration-none" onclick="copyCohortSummary(this)">
+                                        <i class="bi bi-clipboard"></i> Copy
+                                    </button>
+                                </div>
+                                <p class="small text-muted mb-0 font-monospace" id="ch_summary_text">
+                                    Loading cohort protocol...
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="pt-3 mt-3 border-top text-end">
+                            <span class="small text-muted"><i class="bi bi-shield-check text-success"></i> Laboratory Planning Standard</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 5: FORMULATION & VOLUME                -->
+        <!-- ========================================== -->
+        <div class="tab-pane fade" id="tab-form" role="tabpanel">
+            <div class="row g-3 g-md-4">
+                <div class="col-lg-6">
+                    <div class="p-3 bg-light rounded-3 border h-100">
+                        <h6 class="fw-bold text-dark mb-3">
+                            <i class="bi bi-droplet-half text-primary me-2"></i> Solution Concentration & Administration Volume
+                        </h6>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-7 col-sm-7">
+                                <label class="form-label-scientific" for="form_animal_weight">Animal Subject Weight:</label>
+                                <input type="number" id="form_animal_weight" class="form-control form-control-scientific" value="20" min="0.001" step="any" inputmode="decimal">
+                            </div>
+                            <div class="col-5 col-sm-5">
+                                <label class="form-label-scientific" for="form_weight_unit">Weight Unit:</label>
+                                <select id="form_weight_unit" class="form-select form-select-scientific">
+                                    <option value="g" selected>grams (g)</option>
+                                    <option value="kg">kg</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-6 col-sm-6">
+                                <label class="form-label-scientific" for="form_dose">Desired Dose (mg/kg):</label>
+                                <input type="number" id="form_dose" class="form-control form-control-scientific" value="10" min="0.001" step="any" inputmode="decimal">
+                            </div>
+                            <div class="col-6 col-sm-6">
+                                <label class="form-label-scientific" for="form_conc">Stock Conc (mg/mL):</label>
+                                <input type="number" id="form_conc" class="form-control form-control-scientific" value="1.0" min="0.001" step="any" inputmode="decimal">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label-scientific" for="form_route">Planned Administration Route:</label>
+                            <select id="form_route" class="form-select form-select-scientific">
+                                <option value="oral_gavage" selected>Oral Gavage (Standard max ≤ 10 mL/kg)</option>
+                                <option value="ip">Intraperitoneal IP (Standard max ≤ 10 mL/kg)</option>
+                                <option value="iv_bolus">Intravenous IV Bolus (Standard max ≤ 5 mL/kg)</option>
+                                <option value="sc">Subcutaneous SC (Standard max ≤ 5 mL/kg)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="result-card-primary h-100 p-3 p-md-4 d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="badge bg-primary text-white px-2 py-1">Injection / Dosing Volume</span>
+                                <span class="small text-muted">NC3Rs Animal Welfare</span>
+                            </div>
+
+                            <div class="result-metric-box mb-3">
+                                <div class="text-muted small fw-semibold text-uppercase mb-1">Administration Volume Required</div>
+                                <div class="result-metric-val" id="form_res_vol_ml">0.2000 mL</div>
+                                <div class="small text-muted mt-1">In Microliters: <span class="fw-bold font-mono text-primary" id="form_res_vol_ul">200.0 µL</span></div>
+                                <hr class="my-2">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="small text-muted">Total Drug Mass:</span>
+                                    <span class="fw-bold font-mono text-dark" id="form_res_total_dose">0.2000 mg</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mt-1">
+                                    <span class="small text-muted">Volume Dose Rate:</span>
+                                    <span class="fw-bold font-mono text-dark" id="form_res_vol_rate">10.00 mL/kg</span>
+                                </div>
+                            </div>
+
+                            <div id="form_welfare_badge" class="mb-3">
+                                <!-- Dynamic badge -->
+                            </div>
+
+                            <div class="p-3 bg-light rounded border small">
+                                <div class="fw-bold text-dark mb-1"><i class="bi bi-info-circle text-primary me-1"></i> NC3Rs Guidelines:</div>
+                                <ul class="mb-0 ps-3 text-secondary">
+                                    <li>Oral gavage recommended volume: 10 mL/kg (rodent comfort limit).</li>
+                                    <li>IV bolus recommended volume: 5 mL/kg (prevents volume overload).</li>
+                                    <li>If calculated volume exceeds comfort limit, formulate at a higher concentration.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="pt-3 mt-3 border-top text-end">
+                            <span class="small text-muted">Volume (mL) = Total Dose (mg) / Concentration (mg/mL)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ============================================================== -->
+<!-- REAL-TIME MULTI-SPECIES COMPARATIVE MATRIX                      -->
+<!-- ============================================================== -->
+<div id="comparison-matrix" class="table-compare-container mb-5 p-3 p-md-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+        <div>
+            <h4 class="fw-bold mb-0 text-dark fs-5 fs-md-4"><i class="bi bi-grid-3x3-gap me-2 text-primary"></i> Multi-Species Equivalent Dose Matrix</h4>
+            <small class="text-muted">Simultaneous equivalent doses across all 16 laboratory species based on current calculation</small>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="table-swipe-hint d-md-none"><i class="bi bi-arrows-expand-horizontal"></i> Swipe table</span>
+            <span class="badge bg-primary px-3 py-2 font-mono" id="matrix_source_label">10 mg/kg in Mouse</span>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover table-compare mb-0 text-nowrap">
+            <thead>
+                <tr>
+                    <th>Species</th>
+                    <th>$K_m$ Factor</th>
+                    <th>Standard Weight</th>
+                    <th>Equivalent Dose (mg/kg)</th>
+                    <th>Total Subject Dose</th>
+                    <th>Fold Difference</th>
+                </tr>
+            </thead>
+            <tbody id="matrixTableBody">
+                <!-- Dynamically populated -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ============================================================== -->
+<!-- FORMULA & METHODOLOGY SECTION                                  -->
+<!-- ============================================================== -->
+<div id="formula-section" class="formula-box mb-5">
+    <div class="row align-items-center">
+        <div class="col-lg-7">
+            <h5 class="fw-bold mb-2 text-white"><i class="bi bi-calculator me-2 text-cyan"></i> Body Surface Area (BSA) Normalization Principle</h5>
+            <p class="text-light small mb-3">
+                Direct mg/kg extrapolation between small animals and humans causes severe overdosing due to differences in surface-to-mass ratio and basal metabolic clearance. ResearchDose standardizes on the validated FDA (2005) $K_m$ normalization equation:
+            </p>
+            <div class="p-3 bg-dark rounded-3 border border-secondary mb-2">
+                <div class="formula-highlight fs-6 mb-1">Target Dose (mg/kg) = Source Dose (mg/kg) &times; [ Km(source) / Km(target) ]</div>
+                <div class="text-light small">Where: <code>Km = Body Weight (kg) / Body Surface Area (m&sup2;)</code></div>
+            </div>
+            <div class="text-secondary small">
+                Total Dose (mg) = Target Dose (mg/kg) &times; Target Body Weight (kg)
+            </div>
+        </div>
+        <div class="col-lg-5 mt-3 mt-lg-0">
+            <div class="p-3 bg-secondary bg-opacity-25 rounded-3 border border-secondary text-light small">
+                <div class="fw-bold text-info mb-2"><i class="bi bi-lightbulb me-1"></i> Core Integrity Rules:</div>
+                <ul class="mb-0 ps-3">
+                    <li class="mb-1"><strong>Human to Animal:</strong> Reverses $K_m$ factor ratio symmetrically without inventing ad-hoc constants.</li>
+                    <li class="mb-1"><strong>Concentration to Volume:</strong> Volume (mL) = Total Dose (mg) / Formulation Concentration (mg/mL).</li>
+                    <li><strong>Safety Margin:</strong> Human clinical trials require an additional safety factor ($\ge 10\times$) applied to animal NOAEL doses.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================== -->
+<!-- SPECIES DATABASE SECTION                                       -->
+<!-- ============================================================== -->
+<div id="species-section" class="mb-5">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+        <div>
+            <h4 class="fw-bold mb-0 text-dark fs-5 fs-md-4"><i class="bi bi-database me-2 text-primary"></i> Laboratory Species Reference Dataset</h4>
+            <small class="text-muted">Standard guidance values verified against FDA CDER 2005 Table 1 and Reagan-Shaw et al. (2008)</small>
+        </div>
+        <div class="d-flex align-items-center gap-2 w-100 w-sm-auto">
+            <span class="table-swipe-hint d-md-none"><i class="bi bi-arrows-expand-horizontal"></i> Swipe table</span>
+            <input type="text" id="speciesSearchInput" class="form-control form-control-sm flex-grow-1" placeholder="Search species..." style="min-width: 180px;">
+        </div>
+    </div>
+
+    <div class="table-responsive table-scientific">
+        <table class="table table-hover mb-0 text-nowrap">
+            <thead>
+                <tr>
+                    <th>Species</th>
+                    <th>Scientific Name</th>
+                    <th>Category</th>
+                    <th>Standard Weight</th>
+                    <th>BSA (m&sup2;)</th>
+                    <th>Km Factor</th>
+                    <th>Verification</th>
+                    <th>Primary Citation</th>
+                </tr>
+            </thead>
+            <tbody id="speciesTableBody">
+                {% for sp in species_list %}
+                <tr>
+                    <td class="fw-bold text-dark">
+                        {{ sp.common_name }}
+                    </td>
+                    <td class="fst-italic text-secondary">
+                        {{ sp.scientific_name or "N/A" }}
+                    </td>
+                    <td>
+                        <span class="badge bg-light text-secondary border">{{ sp.category.value }}</span>
+                    </td>
+                    <td>
+                        {{ sp.reference_weight_display or "User-defined" }}
+                    </td>
+                    <td>
+                        {% if sp.reference_bsa_m2 %}
+                            <code>{{ sp.reference_bsa_m2 }} m&sup2;</code>
+                        {% else %}
+                            <span class="text-muted">&mdash;</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if sp.km_factor %}
+                            <span class="badge-km">{{ sp.km_factor }}</span>
+                        {% else %}
+                            <span class="badge bg-secondary-subtle text-secondary">Unavailable</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if sp.verification_status.value == "verified" %}
+                            <span class="badge-verified"><i class="bi bi-shield-check me-1"></i> Verified</span>
+                        {% else %}
+                            <span class="badge-unverified"><i class="bi bi-clock-history me-1"></i> Unverified</span>
+                        {% endif %}
+                    </td>
+                    <td class="small">
+                        {% if sp.source_url %}
+                            <a href="{{ sp.source_url }}" target="_blank" class="text-decoration-none text-primary" title="{{ sp.source_citation }}">
+                                <i class="bi bi-box-arrow-up-right me-1"></i> {{ sp.primary_reference_id or "Custom" }}
+                            </a>
+                        {% else %}
+                            <span class="text-muted">{{ sp.source_citation }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ============================================================== -->
+<!-- SCIENTIFIC REFERENCES SECTION                                  -->
+<!-- ============================================================== -->
+<div id="references-section" class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4 class="fw-bold mb-0 text-dark fs-5 fs-md-4"><i class="bi bi-journal-check me-2 text-primary"></i> Scientific Reference Library</h4>
+            <small class="text-muted">Authoritative citations and regulatory guidance documents supporting ResearchDose</small>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        {% for ref in references %}
+        <div class="col-md-6">
+            <div class="p-3 bg-white rounded-3 border h-100 shadow-sm d-flex flex-column justify-content-between">
+                <div>
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle small">{{ ref.organization }}</span>
+                        <span class="text-muted small">{{ ref.publication_date }}</span>
+                    </div>
+                    <h6 class="fw-bold text-dark mb-1">{{ ref.title }}</h6>
+                    <p class="text-secondary small mb-2">{{ ref.summary }}</p>
+                    <div class="small text-muted mb-2">
+                        <strong>Method:</strong> <span class="badge bg-light text-dark border">{{ ref.method_supported }}</span>
+                    </div>
+                </div>
+                <div class="pt-2 border-top mt-2 d-flex justify-content-between align-items-center small">
+                    <span class="text-success fw-medium"><i class="bi bi-patch-check me-1"></i> Verified Source</span>
+                    {% if ref.url %}
+                    <a href="{{ ref.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                        View Official Source <i class="bi bi-box-arrow-up-right ms-1"></i>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- ============================================================== -->
+<!-- MOBILE FLOATING STICKY RESULT BAR                              -->
+<!-- ============================================================== -->
+<div class="mobile-floating-bar d-md-none" id="mobileFloatingBar">
+    <div>
+        <div class="small text-light opacity-75 font-monospace" style="font-size: 0.72rem;" id="mobile_bar_label">Active Result (HED)</div>
+        <div class="mobile-floating-result-val" id="mobile_bar_val">0.8108 mg/kg</div>
+    </div>
+    <button type="button" class="btn btn-sm btn-primary px-3 shadow-sm d-flex align-items-center gap-1" onclick="scrollToResultCard()">
+        <span>Details</span> <i class="bi bi-arrow-down-short fs-6"></i>
+    </button>
+</div>
+{% endblock %}
