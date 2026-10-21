@@ -621,19 +621,52 @@ code, kbd, samp, pre, .font-mono {
     }
 }
 
-/* Print Styles */
-@media print {
-    body {
-        background-color: #ffffff !important;
-        color: #000000 !important;
-        padding-bottom: 0 !important;
-    }
-    .navbar, footer, .preset-chip, .btn, .nav-pills-scientific, .mobile-floating-bar, .table-swipe-hint {
-        display: none !important;
-    }
-    .calc-suite-container, .result-card-primary {
-        box-shadow: none !important;
-        border: 1px solid #000000 !important;
-    }
+/* User-Friendly UI Additions */
+.quick-chip {
+    transition: all 0.15s ease-in-out;
+    font-size: 0.85rem;
+    cursor: pointer;
 }
+
+.quick-chip:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.result-box {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+}
+
+.result-box:hover {
+    border-color: #cbd5e1;
+}
+
+.nav-pills .nav-link {
+    color: #475569;
+    border: 1px solid transparent;
+    transition: all 0.18s ease;
+}
+
+.nav-pills .nav-link:hover {
+    background-color: #f1f5f9;
+    color: #1e293b;
+}
+
+.nav-pills .nav-link.active {
+    background-color: #2563eb;
+    color: #ffffff;
+    box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.25);
+}
+
+.accordion-button:not(.collapsed) {
+    background-color: #f8fafc;
+    color: #2563eb;
+}
+
+.tracking-wider {
+    letter-spacing: 0.05em;
+}
+
 

@@ -1,13 +1,9 @@
 /**
- * ResearchDose — Scientific Dose Conversion & Research Platform
- * Client-side Reactive Engine & API Synchronization
+ * ResearchDose — Simple & Scientific Preclinical Dose Converter
+ * Fast, reactive client-side calculation engine
  */
 
-// Global Species Registry cache
-let speciesRegistry = [];
-let referencesRegistry = [];
-
-// Standard reference Km factors (FDA CDER 2005 Table 1)
+// Standard reference Km factors (US FDA CDER 2005 Table 1)
 const KM_TABLE = {
     human: 37.0,
     child: 25.0,
@@ -49,7 +45,7 @@ const WEIGHT_TABLE = {
     micro_pig: 8.0
 };
 
-// Route welfare guidelines (mL/kg max thresholds)
+// Route welfare guidelines (mL/kg max thresholds from NC3Rs)
 const ROUTE_LIMITS = {
     oral_gavage: { rec: 10.0, max: 20.0, name: "Oral Gavage" },
     iv_bolus: { rec: 5.0, max: 10.0, name: "Intravenous (IV)" },
@@ -57,461 +53,274 @@ const ROUTE_LIMITS = {
     sc: { rec: 5.0, max: 10.0, name: "Subcutaneous (SC)" }
 };
 
-document.addEventListener("DOMContentLoaded", async () => {
-    try {
-        const yearEl = document.getElementById("copyrightYear");
-        if (yearEl) {
-            yearEl.textContent = new Date().getFullYear();
-        }
-        await loadSpeciesData();
-        setupEventListeners();
-        calculateAnimalToHuman();
-        calculateHumanToAnimal();
-        calculateAnimalToAnimal();
-        calculateCohort();
-        calculateFormulationOnly();
-        updateMultiSpeciesMatrix("mouse", 10.0);
-    } catch (err) {
-        console.error("Initialization error:", err);
+document.addEventListener("DOMContentLoaded", () => {
+    // Dynamic copyright year
+    const yearEl = document.getElementById("copyrightYear");
+    if (yearEl) {
+        yearEl.textContent = new Date().getFullYear();
     }
+
+    setupEventListeners();
+    calculateAnimalToHuman();
+    calculateHumanToAnimal();
+    calculateAnimalToAnimal();
+    calculateFormulationOnly();
+    calculateCohort();
+    updateMultiSpeciesMatrix("rat", 10.0);
 });
 
 /**
- * Loads species and reference libraries from the backend API
- */
-async function loadSpeciesData() {
-    try {
-        const resp = await fetch("/api/species");
-        if (resp.ok) {
-            const data = await resp.json();
-            speciesRegistry = data.species;
-        }
-    } catch (e) {
-        console.warn("Could not fetch species API, using fallback baseline.");
-    }
-}
-
-/**
- * Set up all reactive input listeners, tab switches, and presets
+ * Sets up all input listeners for real-time reactivity
  */
 function setupEventListeners() {
-    // Tab 1: Animal to Human
-    const a2hInputs = ["a2h_animal", "a2h_dose", "a2h_dose_unit", "a2h_animal_weight", "a2h_animal_weight_unit", "a2h_human_weight", "a2h_safety_factor", "a2h_conc", "a2h_route"];
+    // Mode 1: Animal to Human
+    const a2hInputs = ["a2h_animal", "a2h_dose", "a2h_dose_unit", "a2h_animal_weight", "a2h_animal_weight_unit", "a2h_human_weight", "a2h_safety_factor"];
     a2hInputs.forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.addEventListener("input", () => calculateAnimalToHuman());
+        if (el) el.addEventListener("input", calculateAnimalToHuman);
     });
 
-    // Auto-update animal weight when selecting species in Tab 1
     const a2hAnimal = document.getElementById("a2h_animal");
     if (a2hAnimal) {
         a2hAnimal.addEventListener("change", () => {
-            const spId = a2hAnimal.value;
-            const refWt = WEIGHT_TABLE[spId] || 0.15;
-            const wtEl = document.getElementById("a2h_animal_weight");
-            const unitEl = document.getElementById("a2h_animal_weight_unit");
-            if (wtEl && unitEl) {
-                if (refWt < 1.0) {
-                    unitEl.value = "g";
-                    wtEl.value = (refWt * 1000).toFixed(0);
-                } else {
-                    unitEl.value = "kg";
-                    wtEl.value = refWt.toFixed(2);
-                }
-            }
+            syncAnimalWeight("a2h_animal", "a2h_animal_weight", "a2h_animal_weight_unit");
             calculateAnimalToHuman();
         });
     }
 
-    // Tab 2: Human to Animal
-    const h2aInputs = ["h2a_dose_type", "h2a_human_dose", "h2a_human_weight", "h2a_target_animal", "h2a_animal_weight", "h2a_animal_weight_unit", "h2a_conc", "h2a_route"];
+    // Mode 2: Human to Animal
+    const h2aInputs = ["h2a_human_dose", "h2a_dose_type", "h2a_target_animal", "h2a_human_weight", "h2a_animal_weight", "h2a_animal_weight_unit"];
     h2aInputs.forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.addEventListener("input", () => calculateHumanToAnimal());
+        if (el) el.addEventListener("input", calculateHumanToAnimal);
     });
 
     const h2aAnimal = document.getElementById("h2a_target_animal");
     if (h2aAnimal) {
         h2aAnimal.addEventListener("change", () => {
-            const spId = h2aAnimal.value;
-            const refWt = WEIGHT_TABLE[spId] || 0.02;
-            const wtEl = document.getElementById("h2a_animal_weight");
-            const unitEl = document.getElementById("h2a_animal_weight_unit");
-            if (wtEl && unitEl) {
-                if (refWt < 1.0) {
-                    unitEl.value = "g";
-                    wtEl.value = (refWt * 1000).toFixed(0);
-                } else {
-                    unitEl.value = "kg";
-                    wtEl.value = refWt.toFixed(2);
-                }
-            }
+            syncAnimalWeight("h2a_target_animal", "h2a_animal_weight", "h2a_animal_weight_unit");
             calculateHumanToAnimal();
         });
     }
 
-    // Tab 3: Animal to Animal
-    const a2aInputs = ["a2a_source_animal", "a2a_source_dose", "a2a_source_weight", "a2a_source_weight_unit", "a2a_target_animal", "a2a_target_weight", "a2a_target_weight_unit", "a2a_conc"];
+    // Mode 3: Animal to Animal
+    const a2aInputs = ["a2a_source_animal", "a2a_source_dose", "a2a_target_animal"];
     a2aInputs.forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.addEventListener("input", () => calculateAnimalToAnimal());
+        if (el) el.addEventListener("input", calculateAnimalToAnimal);
     });
 
-    // Tab 4: Cohort Planner
-    const cohortInputs = ["ch_species", "ch_dose", "ch_count", "ch_avg_weight", "ch_weight_unit", "ch_freq", "ch_days", "ch_waste", "ch_conc"];
-    cohortInputs.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.addEventListener("input", () => calculateCohort());
-    });
-
-    const chSpecies = document.getElementById("ch_species");
-    if (chSpecies) {
-        chSpecies.addEventListener("change", () => {
-            const spId = chSpecies.value;
-            const refWt = WEIGHT_TABLE[spId] || 0.02;
-            const wtEl = document.getElementById("ch_avg_weight");
-            const unitEl = document.getElementById("ch_weight_unit");
-            if (wtEl && unitEl) {
-                if (refWt < 1.0) {
-                    unitEl.value = "g";
-                    wtEl.value = (refWt * 1000).toFixed(0);
-                } else {
-                    unitEl.value = "kg";
-                    wtEl.value = refWt.toFixed(2);
-                }
-            }
-            calculateCohort();
-        });
-    }
-
-    // Tab 5: Formulation & Volume
+    // Tool: Formulation
     const formInputs = ["form_animal_weight", "form_weight_unit", "form_dose", "form_conc", "form_route"];
     formInputs.forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.addEventListener("input", () => calculateFormulationOnly());
+        if (el) el.addEventListener("input", calculateFormulationOnly);
     });
 
-    // Species table search filter
-    const searchInput = document.getElementById("speciesSearchInput");
-    if (searchInput) {
-        searchInput.addEventListener("input", (e) => filterSpeciesTable(e.target.value));
-    }
+    // Tool: Cohort
+    const cohortInputs = ["ch_species", "ch_dose", "ch_count", "ch_days", "ch_freq", "ch_waste", "ch_conc"];
+    cohortInputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener("input", calculateCohort);
+    });
 
-    // Tab change triggers for mobile bar synchronization
-    const tabButtons = document.querySelectorAll("#calcTabs button");
-    tabButtons.forEach(btn => {
-        btn.addEventListener("shown.bs.tab", (e) => {
-            const targetId = e.target.getAttribute("data-bs-target");
-            if (targetId === "#tab-a2h") calculateAnimalToHuman();
-            else if (targetId === "#tab-h2a") calculateHumanToAnimal();
-            else if (targetId === "#tab-a2a") calculateAnimalToAnimal();
-            else if (targetId === "#tab-cohort") calculateCohort();
-            else if (targetId === "#tab-form") calculateFormulationOnly();
+    // Tool: Matrix
+    const matrixInputs = ["matrixSourceSpecies", "matrixSourceDose"];
+    matrixInputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener("input", () => {
+            const sp = document.getElementById("matrixSourceSpecies")?.value || "rat";
+            const dose = parseFloat(document.getElementById("matrixSourceDose")?.value) || 10.0;
+            updateMultiSpeciesMatrix(sp, dose);
         });
     });
 }
 
-/**
- * Filter species in dataset table
- */
-function filterSpeciesTable(query) {
-    const q = query.toLowerCase().trim();
-    const rows = document.querySelectorAll("#speciesTableBody tr");
-    rows.forEach(r => {
-        const text = r.innerText.toLowerCase();
-        r.style.display = text.includes(q) ? "" : "none";
-    });
+function syncAnimalWeight(selectId, weightInputId, unitSelectId) {
+    const spId = document.getElementById(selectId)?.value;
+    const refWt = WEIGHT_TABLE[spId] || 0.15;
+    const wtEl = document.getElementById(weightInputId);
+    const unitEl = document.getElementById(unitSelectId);
+    if (wtEl && unitEl) {
+        if (refWt < 1.0) {
+            unitEl.value = "g";
+            wtEl.value = (refWt * 1000).toFixed(0);
+        } else {
+            unitEl.value = "kg";
+            wtEl.value = refWt.toFixed(2);
+        }
+    }
 }
 
 /**
- * Tab 1: Animal to Human Dose Calculation (HED)
+ * Quick Animal Chip selector
+ */
+function quickSelectA2H(animalId, defaultDose) {
+    const selectEl = document.getElementById("a2h_animal");
+    if (selectEl) {
+        selectEl.value = animalId;
+        syncAnimalWeight("a2h_animal", "a2h_animal_weight", "a2h_animal_weight_unit");
+    }
+    const doseEl = document.getElementById("a2h_dose");
+    if (doseEl && defaultDose) {
+        doseEl.value = defaultDose;
+    }
+    // Highlight selected chip
+    document.querySelectorAll(".quick-chip").forEach(btn => {
+        btn.classList.remove("btn-primary", "text-white");
+        btn.classList.add("btn-outline-secondary");
+    });
+    if (event && event.currentTarget) {
+        event.currentTarget.classList.remove("btn-outline-secondary");
+        event.currentTarget.classList.add("btn-primary", "text-white");
+    }
+    calculateAnimalToHuman();
+}
+
+/**
+ * 1. Animal to Human Calculation (HED)
  */
 function calculateAnimalToHuman() {
-    const spId = document.getElementById("a2h_animal")?.value || "mouse";
+    const spId = document.getElementById("a2h_animal")?.value || "rat";
     const doseRaw = parseFloat(document.getElementById("a2h_dose")?.value) || 0;
     const doseUnit = document.getElementById("a2h_dose_unit")?.value || "mg_kg";
-    const animalWtRaw = parseFloat(document.getElementById("a2h_animal_weight")?.value) || 0;
-    const animalWtUnit = document.getElementById("a2h_animal_weight_unit")?.value || "g";
     const humanWt = parseFloat(document.getElementById("a2h_human_weight")?.value) || 60.0;
     const safetyFactor = parseFloat(document.getElementById("a2h_safety_factor")?.value) || 1.0;
-    const conc = parseFloat(document.getElementById("a2h_conc")?.value) || 0;
-    const route = document.getElementById("a2h_route")?.value || "oral_gavage";
 
     if (doseRaw <= 0) return;
 
-    // Normalize animal dose to mg/kg
+    // Normalize dose to mg/kg
     let doseMgKg = doseRaw;
     if (doseUnit === "ug_kg") doseMgKg = doseRaw / 1000.0;
     if (doseUnit === "g_kg") doseMgKg = doseRaw * 1000.0;
 
-    // Normalize animal weight to kg
-    let animalWtKg = animalWtRaw > 0 ? (animalWtUnit === "g" ? animalWtRaw / 1000.0 : animalWtRaw) : (WEIGHT_TABLE[spId] || 0.02);
+    const sourceKm = KM_TABLE[spId] || 6.0;
+    const humanKm = KM_TABLE.human; // 37.0
 
-    const sourceKm = KM_TABLE[spId] || 3.0;
-    const humanKm = KM_TABLE.human; // 37
-
-    // Interspecies BSA formula: HED = Animal Dose * (Animal Km / Human Km)
+    // FDA Allometric Formula: HED = Dose * (Km_animal / Km_human)
     const kmRatio = sourceKm / humanKm;
     const hedMgKg = doseMgKg * kmRatio;
-    const humanTotalMg = hedMgKg * humanWt;
+    const totalHumanMg = hedMgKg * humanWt;
 
-    // Safety factor (MRSD)
-    const mrsdMgKg = safetyFactor > 1 ? hedMgKg / safetyFactor : null;
-    const mrsdTotalMg = mrsdMgKg ? mrsdMgKg * humanWt : null;
+    // Display numbers
+    setText("a2h_result_hed", hedMgKg.toFixed(4));
+    setText("a2h_result_total", totalHumanMg.toFixed(2) + " mg");
+    setText("a2h_result_ratio", kmRatio.toFixed(4));
+    setText("a2h_human_wt_tag", `For ${humanWt} kg Adult`);
 
-    // Difference vs direct unscaled mg/kg
-    const directDiffPct = ((hedMgKg - doseMgKg) / doseMgKg) * 100.0;
+    // Plain English explanation
+    const animalName = getSpeciesName(spId);
+    const explanationEl = document.getElementById("a2h_explanation");
+    if (explanationEl) {
+        explanationEl.innerHTML = `
+            <i class="bi bi-lightbulb-fill text-info flex-shrink-0 fs-5"></i>
+            <div>
+                A <strong>${doseRaw} ${doseUnit === 'mg_kg' ? 'mg/kg' : doseUnit}</strong> dose in a <strong>${animalName}</strong> equals <strong>${hedMgKg.toFixed(4)} mg/kg</strong> in an adult Human.<br>
+                Total compound required for a ${humanWt} kg person: <strong>${totalHumanMg.toFixed(2)} mg</strong>.
+            </div>
+        `;
+    }
 
-    // Update UI elements
-    setText("a2h_res_hed_mg_kg", hedMgKg.toFixed(4) + " mg/kg");
-    setText("a2h_res_total_mg", humanTotalMg.toFixed(2) + " mg");
-    setText("a2h_res_km_ratio", `${sourceKm} / ${humanKm} = ${kmRatio.toFixed(4)}`);
-    setText("a2h_res_diff", `${directDiffPct >= 0 ? "+" : ""}${directDiffPct.toFixed(1)}% vs direct mg/kg`);
-
-    // MRSD display
-    const mrsdRow = document.getElementById("a2h_mrsd_container");
-    if (mrsdRow) {
-        if (safetyFactor > 1 && mrsdMgKg) {
-            mrsdRow.style.display = "block";
-            setText("a2h_res_mrsd_mg_kg", mrsdMgKg.toFixed(4) + " mg/kg");
-            setText("a2h_res_mrsd_total_mg", mrsdTotalMg.toFixed(2) + " mg");
-            setText("a2h_mrsd_factor_label", `${safetyFactor}× Safety Factor Applied`);
+    // Clinical MRSD safety margin
+    const mrsdBox = document.getElementById("a2h_mrsd_box");
+    if (mrsdBox) {
+        if (safetyFactor > 1.0) {
+            mrsdBox.classList.remove("d-none");
+            const mrsdDose = hedMgKg / safetyFactor;
+            const mrsdTotal = totalHumanMg / safetyFactor;
+            setText("a2h_mrsd_val", mrsdDose.toFixed(4) + " mg/kg");
+            setText("a2h_mrsd_total", mrsdTotal.toFixed(2) + " mg");
         } else {
-            mrsdRow.style.display = "none";
+            mrsdBox.classList.add("d-none");
         }
     }
-
-    // Formulation volume if concentration given
-    const volBox = document.getElementById("a2h_volume_box");
-    if (volBox) {
-        if (conc > 0) {
-            volBox.style.display = "block";
-            const totalAnimalDoseMg = doseMgKg * animalWtKg;
-            const volMl = totalAnimalDoseMg / conc;
-            const volUl = volMl * 1000.0;
-            const volPerKg = volMl / animalWtKg;
-
-            setText("a2h_res_vol_ml", volMl.toFixed(3) + " mL (" + volUl.toFixed(1) + " µL)");
-            setText("a2h_res_vol_rate", volPerKg.toFixed(2) + " mL/kg");
-
-            evaluateWelfareBadge("a2h_welfare_badge", volPerKg, route);
-        } else {
-            volBox.style.display = "none";
-        }
-    }
-
-    // Steps list
-    const steps = [
-        `1. Animal dose normalized: ${doseRaw} ${doseUnit} = ${doseMgKg.toFixed(4)} mg/kg.`,
-        `2. Km Factors retrieved: ${getSpeciesName(spId)} Km = ${sourceKm}; Adult Human Km = ${humanKm}.`,
-        `3. Conversion ratio: Km(animal) / Km(human) = ${sourceKm} / ${humanKm} = ${kmRatio.toFixed(6)}.`,
-        `4. Human Equivalent Dose: ${doseMgKg.toFixed(4)} mg/kg × (${sourceKm}/${humanKm}) = ${hedMgKg.toFixed(4)} mg/kg.`,
-        `5. Total Human Dose (${humanWt} kg): ${hedMgKg.toFixed(4)} mg/kg × ${humanWt} kg = ${humanTotalMg.toFixed(4)} mg.`
-    ];
-    if (safetyFactor > 1 && mrsdMgKg) {
-        steps.push(`6. Clinical Starting Dose (${safetyFactor}× safety margin): ${hedMgKg.toFixed(4)} / ${safetyFactor} = ${mrsdMgKg.toFixed(4)} mg/kg (${mrsdTotalMg.toFixed(4)} mg total).`);
-    }
-    steps.push(`7. Biological rationale: Without BSA scaling, direct mg/kg would administer ${doseMgKg.toFixed(4)} mg/kg (${(doseMgKg * humanWt).toFixed(1)} mg), causing a severe ${Math.abs(directDiffPct).toFixed(0)}% overdose!`);
-
-    renderSteps("a2h_steps_list", steps);
-
-    // Update real-time matrix
-    updateMultiSpeciesMatrix(spId, doseMgKg);
-
-    // Update mobile floating bar
-    updateMobileFloatingBar("HED: " + hedMgKg.toFixed(4) + " mg/kg", "Human: " + humanTotalMg.toFixed(1) + " mg");
 }
 
 /**
- * Tab 2: Human to Animal Preclinical Dose Calculation
+ * 2. Human to Animal Calculation
  */
 function calculateHumanToAnimal() {
     const doseType = document.getElementById("h2a_dose_type")?.value || "mg_kg";
     const humanDoseRaw = parseFloat(document.getElementById("h2a_human_dose")?.value) || 0;
     const humanWt = parseFloat(document.getElementById("h2a_human_weight")?.value) || 60.0;
     const targetSp = document.getElementById("h2a_target_animal")?.value || "mouse";
-    const animalWtRaw = parseFloat(document.getElementById("h2a_animal_weight")?.value) || 0;
+    const animalWtRaw = parseFloat(document.getElementById("h2a_animal_weight")?.value) || 20;
     const animalWtUnit = document.getElementById("h2a_animal_weight_unit")?.value || "g";
-    const conc = parseFloat(document.getElementById("h2a_conc")?.value) || 0;
-    const route = document.getElementById("h2a_route")?.value || "oral_gavage";
 
     if (humanDoseRaw <= 0) return;
 
-    // Determine human dose in mg/kg
     let humanMgKg = humanDoseRaw;
     if (doseType === "total_mg") {
         humanMgKg = humanDoseRaw / humanWt;
     }
 
-    // Animal weight in kg
-    let animalWtKg = animalWtRaw > 0 ? (animalWtUnit === "g" ? animalWtRaw / 1000.0 : animalWtRaw) : (WEIGHT_TABLE[targetSp] || 0.02);
-
-    const humanKm = KM_TABLE.human; // 37
+    const animalWtKg = animalWtUnit === "g" ? animalWtRaw / 1000.0 : animalWtRaw;
+    const humanKm = KM_TABLE.human; // 37.0
     const targetKm = KM_TABLE[targetSp] || 3.0;
 
-    // Animal Dose (mg/kg) = Human Dose (mg/kg) * (Human Km / Animal Km)
     const kmRatio = humanKm / targetKm;
     const animalDoseMgKg = humanMgKg * kmRatio;
-
-    // Total mass required for this specific individual animal
     const animalTotalMg = animalDoseMgKg * animalWtKg;
-    const animalTotalUg = animalTotalMg * 1000.0;
 
-    setText("h2a_res_dose_mg_kg", animalDoseMgKg.toFixed(3) + " mg/kg");
-    setText("h2a_res_total_mg", animalTotalMg.toFixed(4) + " mg");
-    setText("h2a_res_total_ug", animalTotalUg.toFixed(1) + " µg");
-    setText("h2a_res_km_ratio", `${humanKm} / ${targetKm} = ${kmRatio.toFixed(3)}`);
-    setText("h2a_res_animal_wt", `${animalWtRaw} ${animalWtUnit} (${animalWtKg.toFixed(4)} kg)`);
+    setText("h2a_result_dose", animalDoseMgKg.toFixed(2));
+    setText("h2a_result_total", animalTotalMg.toFixed(3) + " mg");
+    setText("h2a_result_ratio", kmRatio.toFixed(2) + "×");
 
-    // Formulation volume
-    const volBox = document.getElementById("h2a_volume_box");
-    if (volBox) {
-        if (conc > 0) {
-            volBox.style.display = "block";
-            const volMl = animalTotalMg / conc;
-            const volUl = volMl * 1000.0;
-            const volPerKg = volMl / animalWtKg;
-
-            setText("h2a_res_vol_ml", volMl.toFixed(4) + " mL (" + volUl.toFixed(1) + " µL)");
-            setText("h2a_res_vol_rate", volPerKg.toFixed(2) + " mL/kg");
-
-            evaluateWelfareBadge("h2a_welfare_badge", volPerKg, route);
-        } else {
-            volBox.style.display = "none";
-        }
+    const targetName = getSpeciesName(targetSp);
+    const explanationEl = document.getElementById("h2a_explanation");
+    if (explanationEl) {
+        explanationEl.innerHTML = `
+            <i class="bi bi-lightbulb-fill text-info flex-shrink-0 fs-5"></i>
+            <div>
+                A <strong>${humanDoseRaw} ${doseType === 'total_mg' ? 'total mg' : 'mg/kg'}</strong> human dose translates to <strong>${animalDoseMgKg.toFixed(2)} mg/kg</strong> in <strong>${targetName}</strong> due to higher small-mammal metabolic rate.
+            </div>
+        `;
     }
-
-    // Steps
-    const steps = [
-        `1. Human baseline dose: ${humanDoseRaw} ${doseType === "total_mg" ? "total mg" : "mg/kg"} (Human weight: ${humanWt} kg) = ${humanMgKg.toFixed(4)} mg/kg.`,
-        `2. Km factors: Human Km = ${humanKm}; ${getSpeciesName(targetSp)} Km = ${targetKm}.`,
-        `3. Allometric ratio: Km(human) / Km(animal) = ${humanKm} / ${targetKm} = ${kmRatio.toFixed(4)}.`,
-        `4. Target animal dose rate: ${humanMgKg.toFixed(4)} mg/kg × ${kmRatio.toFixed(4)} = ${animalDoseMgKg.toFixed(4)} mg/kg.`,
-        `5. Individual animal total dose (${animalWtRaw} ${animalWtUnit} = ${animalWtKg.toFixed(4)} kg): ${animalDoseMgKg.toFixed(4)} mg/kg × ${animalWtKg.toFixed(4)} kg = ${animalTotalMg.toFixed(4)} mg (${animalTotalUg.toFixed(1)} µg).`
-    ];
-    if (conc > 0) {
-        const volMl = animalTotalMg / conc;
-        steps.push(`6. Solution volume (${conc} mg/mL): ${animalTotalMg.toFixed(4)} mg / ${conc} mg/mL = ${volMl.toFixed(4)} mL (${(volMl * 1000).toFixed(1)} µL).`);
-    }
-
-    renderSteps("h2a_steps_list", steps);
-
-    // Update mobile floating bar
-    updateMobileFloatingBar(getSpeciesName(targetSp) + " Dose", animalDoseMgKg.toFixed(2) + " mg/kg (" + animalTotalMg.toFixed(2) + " mg)");
 }
 
 /**
- * Tab 3: Animal to Animal Interspecies Conversion
+ * 3. Animal to Animal Calculation
  */
 function calculateAnimalToAnimal() {
     const srcSp = document.getElementById("a2a_source_animal")?.value || "mouse";
-    const srcDoseRaw = parseFloat(document.getElementById("a2a_source_dose")?.value) || 0;
+    const srcDose = parseFloat(document.getElementById("a2a_source_dose")?.value) || 0;
     const tgtSp = document.getElementById("a2a_target_animal")?.value || "rat";
-    const tgtWtRaw = parseFloat(document.getElementById("a2a_target_weight")?.value) || 0;
-    const tgtWtUnit = document.getElementById("a2a_target_weight_unit")?.value || "g";
-    const conc = parseFloat(document.getElementById("a2a_conc")?.value) || 0;
 
-    if (srcDoseRaw <= 0) return;
-
-    let tgtWtKg = tgtWtRaw > 0 ? (tgtWtUnit === "g" ? tgtWtRaw / 1000.0 : tgtWtRaw) : (WEIGHT_TABLE[tgtSp] || 0.15);
+    if (srcDose <= 0) return;
 
     const srcKm = KM_TABLE[srcSp] || 3.0;
     const tgtKm = KM_TABLE[tgtSp] || 6.0;
-
     const kmRatio = srcKm / tgtKm;
-    const tgtDoseMgKg = srcDoseRaw * kmRatio;
-    const tgtTotalMg = tgtDoseMgKg * tgtWtKg;
-    const tgtTotalUg = tgtTotalMg * 1000.0;
+    const tgtDose = srcDose * kmRatio;
 
-    setText("a2a_res_dose_mg_kg", tgtDoseMgKg.toFixed(4) + " mg/kg");
-    setText("a2a_res_total_mg", tgtTotalMg.toFixed(4) + " mg");
-    setText("a2a_res_total_ug", tgtTotalUg.toFixed(1) + " µg");
-    setText("a2a_res_km_ratio", `${srcKm} / ${tgtKm} = ${kmRatio.toFixed(4)}`);
+    const refWt = WEIGHT_TABLE[tgtSp] || 0.15;
+    const tgtTotalMg = tgtDose * refWt;
 
-    const volBox = document.getElementById("a2a_vol_box");
-    if (volBox) {
-        if (conc > 0) {
-            volBox.style.display = "block";
-            const volMl = tgtTotalMg / conc;
-            setText("a2a_res_vol", `${volMl.toFixed(4)} mL (${(volMl * 1000).toFixed(1)} µL)`);
-        } else {
-            volBox.style.display = "none";
-        }
+    setText("a2a_result_dose", tgtDose.toFixed(2));
+    setText("a2a_result_total", tgtTotalMg.toFixed(2) + " mg");
+    setText("a2a_result_ratio", kmRatio.toFixed(4));
+
+    const srcName = getSpeciesName(srcSp);
+    const tgtName = getSpeciesName(tgtSp);
+    const expEl = document.getElementById("a2a_explanation");
+    if (expEl) {
+        expEl.innerHTML = `
+            <i class="bi bi-lightbulb-fill text-info flex-shrink-0 fs-5"></i>
+            <div>
+                <strong>${srcDose} mg/kg</strong> in <strong>${srcName}</strong> translates to <strong>${tgtDose.toFixed(2)} mg/kg</strong> in <strong>${tgtName}</strong>.
+            </div>
+        `;
     }
-
-    const steps = [
-        `1. Source: ${getSpeciesName(srcSp)} (Km = ${srcKm}), Source dose = ${srcDoseRaw.toFixed(4)} mg/kg.`,
-        `2. Target: ${getSpeciesName(tgtSp)} (Km = ${tgtKm}).`,
-        `3. Interspecies ratio: Km(source) / Km(target) = ${srcKm} / ${tgtKm} = ${kmRatio.toFixed(6)}.`,
-        `4. Target dose: ${srcDoseRaw.toFixed(4)} mg/kg × ${kmRatio.toFixed(6)} = ${tgtDoseMgKg.toFixed(4)} mg/kg.`,
-        `5. Target total mass for individual animal (${tgtWtRaw} ${tgtWtUnit}): ${tgtDoseMgKg.toFixed(4)} mg/kg × ${tgtWtKg.toFixed(4)} kg = ${tgtTotalMg.toFixed(4)} mg (${tgtTotalUg.toFixed(1)} µg).`
-    ];
-
-    renderSteps("a2a_steps_list", steps);
-
-    // Update mobile floating bar
-    updateMobileFloatingBar(getSpeciesName(tgtSp) + " Dose", tgtDoseMgKg.toFixed(2) + " mg/kg (" + tgtTotalMg.toFixed(2) + " mg)");
 }
 
 /**
- * Tab 4: Cohort Study Bulk Drug Requirement Planner
- */
-function calculateCohort() {
-    const spId = document.getElementById("ch_species")?.value || "mouse";
-    const doseRaw = parseFloat(document.getElementById("ch_dose")?.value) || 0;
-    const count = parseInt(document.getElementById("ch_count")?.value) || 10;
-    const avgWtRaw = parseFloat(document.getElementById("ch_avg_weight")?.value) || 20;
-    const wtUnit = document.getElementById("ch_weight_unit")?.value || "g";
-    const freq = parseInt(document.getElementById("ch_freq")?.value) || 1;
-    const days = parseInt(document.getElementById("ch_days")?.value) || 14;
-    const wastePct = parseFloat(document.getElementById("ch_waste")?.value) || 10.0;
-    const conc = parseFloat(document.getElementById("ch_conc")?.value) || 0;
-
-    if (doseRaw <= 0 || count <= 0) return;
-
-    const avgWtKg = wtUnit === "g" ? avgWtRaw / 1000.0 : avgWtRaw;
-    const singleDoseMg = doseRaw * avgWtKg;
-    const dailyTotalMg = singleDoseMg * count * freq;
-    const studyNetMg = dailyTotalMg * days;
-    const wasteMg = studyNetMg * (wastePct / 100.0);
-    const grandTotalMg = studyNetMg + wasteMg;
-    const grandTotalG = grandTotalMg / 1000.0;
-
-    setText("ch_res_single_mg", singleDoseMg.toFixed(4) + " mg (" + (singleDoseMg * 1000).toFixed(1) + " µg)");
-    setText("ch_res_daily_mg", dailyTotalMg.toFixed(2) + " mg/day");
-    setText("ch_res_study_net_mg", studyNetMg.toFixed(2) + " mg");
-    setText("ch_res_waste_mg", `+${wasteMg.toFixed(2)} mg (${wastePct}%)`);
-    setText("ch_res_grand_total_mg", grandTotalMg.toFixed(2) + " mg");
-    setText("ch_res_grand_total_g", grandTotalG.toFixed(4) + " g");
-
-    const volContainer = document.getElementById("ch_res_volume_container");
-    if (volContainer) {
-        if (conc > 0) {
-            volContainer.style.display = "block";
-            const singleVolMl = singleDoseMg / conc;
-            const totalVolMl = grandTotalMg / conc;
-            setText("ch_res_single_vol", `${singleVolMl.toFixed(3)} mL (${(singleVolMl * 1000).toFixed(1)} µL) per animal`);
-            setText("ch_res_total_vol", `${totalVolMl.toFixed(1)} mL total stock formulation`);
-        } else {
-            volContainer.style.display = "none";
-        }
-    }
-
-    const summary = `Cohort of ${count} ${getSpeciesName(spId)}s (${avgWtRaw} ${wtUnit}) dosed at ${doseRaw} mg/kg (${freq}×/day) for ${days} days. Total active compound needed with ${wastePct}% contingency: ${grandTotalMg.toFixed(2)} mg (${grandTotalG.toFixed(4)} g).`;
-    setText("ch_summary_text", summary);
-
-    // Update mobile floating bar
-    updateMobileFloatingBar("Total Study Compound", grandTotalMg.toFixed(1) + " mg (" + grandTotalG.toFixed(3) + " g)");
-}
-
-/**
- * Tab 5: Formulation & Administration Volume Standalone
+ * 4. Formulation & Volume Calculator
  */
 function calculateFormulationOnly() {
-    const wtRaw = parseFloat(document.getElementById("form_animal_weight")?.value) || 20;
+    const wtRaw = parseFloat(document.getElementById("form_animal_weight")?.value) || 150;
     const wtUnit = document.getElementById("form_weight_unit")?.value || "g";
-    const doseMgKg = parseFloat(document.getElementById("form_dose")?.value) || 10;
-    const conc = parseFloat(document.getElementById("form_conc")?.value) || 1.0;
+    const doseMgKg = parseFloat(document.getElementById("form_dose")?.value) || 20;
+    const conc = parseFloat(document.getElementById("form_conc")?.value) || 5;
     const route = document.getElementById("form_route")?.value || "oral_gavage";
 
     if (doseMgKg <= 0 || conc <= 0 || wtRaw <= 0) return;
@@ -522,216 +331,151 @@ function calculateFormulationOnly() {
     const volUl = volMl * 1000.0;
     const volPerKg = volMl / wtKg;
 
-    setText("form_res_total_dose", `${totalDoseMg.toFixed(4)} mg (${(totalDoseMg * 1000).toFixed(1)} µg)`);
-    setText("form_res_vol_ml", `${volMl.toFixed(4)} mL`);
-    setText("form_res_vol_ul", `${volUl.toFixed(1)} µL`);
-    setText("form_res_vol_rate", `${volPerKg.toFixed(2)} mL/kg`);
+    setText("form_vol_ml", volMl.toFixed(2) + " mL");
+    setText("form_vol_ul", "(" + volUl.toFixed(1) + " µL)");
 
-    evaluateWelfareBadge("form_welfare_badge", volPerKg, route);
+    const limits = ROUTE_LIMITS[route] || ROUTE_LIMITS.oral_gavage;
+    const badge = document.getElementById("form_welfare_badge");
+    const title = document.getElementById("form_welfare_title");
+    const msg = document.getElementById("form_welfare_msg");
 
-    // Update mobile floating bar
-    updateMobileFloatingBar("Admin Volume", volMl.toFixed(3) + " mL (" + volUl.toFixed(0) + " µL)");
+    if (badge && title && msg) {
+        if (volPerKg <= limits.rec) {
+            badge.className = "p-2 rounded-3 mb-2 bg-success-subtle text-success border border-success-subtle";
+            title.innerHTML = `<i class="bi bi-check-circle-fill me-1"></i> Volume Safe (${volPerKg.toFixed(1)} mL/kg)`;
+            msg.innerText = `Within recommended NC3Rs guideline of ≤ ${limits.rec} mL/kg for ${limits.name}.`;
+        } else if (volPerKg <= limits.max) {
+            badge.className = "p-2 rounded-3 mb-2 bg-warning-subtle text-warning-emphasis border border-warning-subtle";
+            title.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-1"></i> Caution (${volPerKg.toFixed(1)} mL/kg)`;
+            msg.innerText = `Exceeds recommended comfort limit (${limits.rec} mL/kg). Ethical max is ${limits.max} mL/kg.`;
+        } else {
+            badge.className = "p-2 rounded-3 mb-2 bg-danger-subtle text-danger border border-danger-subtle";
+            title.innerHTML = `<i class="bi bi-x-circle-fill me-1"></i> Limit Exceeded (${volPerKg.toFixed(1)} mL/kg)`;
+            msg.innerText = `Exceeds ethical animal welfare limit (${limits.max} mL/kg). Increase drug concentration.`;
+        }
+    }
 }
 
 /**
- * Multi-Species Real-time Comparison Table
+ * 5. Cohort Study Bulk Drug Planner
+ */
+function calculateCohort() {
+    const spId = document.getElementById("ch_species")?.value || "rat";
+    const dose = parseFloat(document.getElementById("ch_dose")?.value) || 20;
+    const count = parseInt(document.getElementById("ch_count")?.value) || 10;
+    const days = parseInt(document.getElementById("ch_days")?.value) || 14;
+    const freq = parseInt(document.getElementById("ch_freq")?.value) || 1;
+    const wastePct = parseFloat(document.getElementById("ch_waste")?.value) || 10;
+    const conc = parseFloat(document.getElementById("ch_conc")?.value) || 5;
+
+    if (dose <= 0 || count <= 0) return;
+
+    const refWt = WEIGHT_TABLE[spId] || 0.15;
+    const singleDoseMg = dose * refWt;
+    const dailyTotalMg = singleDoseMg * count * freq;
+    const studyNetMg = dailyTotalMg * days;
+    const totalMg = studyNetMg * (1.0 + wastePct / 100.0);
+    const totalG = totalMg / 1000.0;
+    const totalVolMl = totalMg / conc;
+    const singleVolMl = singleDoseMg / conc;
+
+    setText("ch_res_total_mg", totalMg.toFixed(2) + " mg");
+    setText("ch_res_total_g", `(${totalG.toFixed(3)} g active compound)`);
+    setText("ch_res_total_vol", totalVolMl.toFixed(1) + " mL");
+    setText("ch_res_dose_per_animal", singleDoseMg.toFixed(2) + " mg");
+    setText("ch_res_vol_per_animal", singleVolMl.toFixed(2) + " mL");
+}
+
+/**
+ * 6. Multi-Species Realtime Matrix
  */
 function updateMultiSpeciesMatrix(srcSpeciesId, doseMgKg) {
-    const tableBody = document.getElementById("matrixTableBody");
-    if (!tableBody) return;
+    const tbody = document.getElementById("matrixTableBody");
+    if (!tbody) return;
 
-    const srcKm = KM_TABLE[srcSpeciesId] || 3.0;
-
+    const srcKm = KM_TABLE[srcSpeciesId] || 6.0;
     let html = "";
-    Object.keys(KM_TABLE).forEach(spKey => {
+
+    const speciesCategories = {
+        human: "Human",
+        child: "Human (Child)",
+        mouse: "Rodent",
+        rat: "Rodent",
+        hamster: "Rodent",
+        guinea_pig: "Rodent",
+        rabbit: "Lagomorph",
+        ferret: "Carnivore",
+        dog: "Carnivore",
+        cat: "Carnivore",
+        monkey_cynomolgus: "Primate",
+        monkey_rhesus: "Primate",
+        monkey_marmoset: "Primate",
+        mini_pig: "Swine",
+        micro_pig: "Swine"
+    };
+
+    Object.keys(speciesCategories).forEach(spKey => {
         const spKm = KM_TABLE[spKey];
         const refWt = WEIGHT_TABLE[spKey];
         const equivDose = doseMgKg * (srcKm / spKm);
-        const totalDose = equivDose * refWt;
-        const foldDiff = equivDose / doseMgKg;
-        const isSource = spKey === srcSpeciesId;
+        const totalMass = equivDose * refWt;
+        const isCurrent = spKey === srcSpeciesId;
 
         html += `
-            <tr class="${isSource ? 'highlight-source' : ''}">
-                <td class="fw-bold">${getSpeciesName(spKey)} ${isSource ? '<span class="badge bg-primary ms-1">Source</span>' : ''}</td>
-                <td><span class="badge-km">${spKm}</span></td>
+            <tr class="${isCurrent ? 'table-primary fw-bold' : ''}">
+                <td>${getSpeciesName(spKey)} ${isCurrent ? '<span class="badge bg-primary ms-1">Source</span>' : ''}</td>
+                <td><span class="badge bg-light text-dark border">${speciesCategories[spKey]}</span></td>
                 <td>${refWt >= 1 ? refWt.toFixed(2) + " kg" : (refWt * 1000).toFixed(0) + " g"}</td>
-                <td class="font-mono fw-bold text-primary">${equivDose.toFixed(4)} mg/kg</td>
-                <td class="font-mono">${totalDose.toFixed(3)} mg</td>
-                <td class="font-mono text-secondary">${foldDiff.toFixed(2)}×</td>
+                <td><span class="badge bg-secondary-subtle text-secondary-emphasis">${spKm}</span></td>
+                <td class="fw-bold text-primary">${equivDose.toFixed(4)} mg/kg</td>
+                <td>${totalMass.toFixed(2)} mg</td>
             </tr>
         `;
     });
 
-    tableBody.innerHTML = html;
-    setText("matrix_source_label", `${doseMgKg} mg/kg in ${getSpeciesName(srcSpeciesId)}`);
+    tbody.innerHTML = html;
 }
 
 /**
- * Evaluates volume rate against NC3Rs animal welfare guidelines
+ * Copy Result to Clipboard with Toast Notification
  */
-function evaluateWelfareBadge(elementId, volPerKg, route) {
-    const el = document.getElementById(elementId);
-    if (!el) return;
-
-    const limits = ROUTE_LIMITS[route] || ROUTE_LIMITS.oral_gavage;
-
-    if (volPerKg <= limits.rec) {
-        el.className = "welfare-badge-safe";
-        el.innerHTML = `<i class="bi bi-check-circle-fill"></i> <strong>Safe (${volPerKg.toFixed(2)} mL/kg):</strong> Within standard ${limits.name} guidelines (≤ ${limits.rec} mL/kg).`;
-    } else if (volPerKg <= limits.max) {
-        el.className = "welfare-badge-warning";
-        el.innerHTML = `<i class="bi bi-exclamation-triangle-fill"></i> <strong>Caution (${volPerKg.toFixed(2)} mL/kg):</strong> Exceeds standard comfort limit (≤ ${limits.rec} mL/kg). Monitor animal closely.`;
-    } else {
-        el.className = "welfare-badge-exceeded";
-        el.innerHTML = `<i class="bi bi-x-octagon-fill"></i> <strong>Exceeded (${volPerKg.toFixed(2)} mL/kg):</strong> Exceeds maximum ethical limit (${limits.max} mL/kg)! Please increase drug concentration.`;
+function copyResult(mode) {
+    let copyText = "";
+    if (mode === "a2h") {
+        const animal = getSpeciesName(document.getElementById("a2h_animal")?.value || "rat");
+        const dose = document.getElementById("a2h_dose")?.value;
+        const hed = document.getElementById("a2h_result_hed")?.innerText;
+        const total = document.getElementById("a2h_result_total")?.innerText;
+        copyText = `ResearchDose Conversion:\nAnimal: ${animal} (${dose} mg/kg)\nHuman Equivalent Dose (HED): ${hed} mg/kg\nTotal Human Dose: ${total} (60 kg adult)\nStandard: US FDA CDER 2005 Table 1`;
+    } else if (mode === "h2a") {
+        const humanDose = document.getElementById("h2a_human_dose")?.value;
+        const animal = getSpeciesName(document.getElementById("h2a_target_animal")?.value || "mouse");
+        const dose = document.getElementById("h2a_result_dose")?.innerText;
+        const total = document.getElementById("h2a_result_total")?.innerText;
+        copyText = `ResearchDose Translation:\nHuman Dose: ${humanDose} mg/kg\nTarget Animal: ${animal} (${dose} mg/kg)\nPer Animal Dose: ${total}\nStandard: Allometric Km Scaling`;
+    } else if (mode === "a2a") {
+        const srcAnimal = getSpeciesName(document.getElementById("a2a_source_animal")?.value || "mouse");
+        const srcDose = document.getElementById("a2a_source_dose")?.value;
+        const tgtAnimal = getSpeciesName(document.getElementById("a2a_target_animal")?.value || "rat");
+        const tgtDose = document.getElementById("a2a_result_dose")?.innerText;
+        copyText = `ResearchDose Interspecies:\nSource: ${srcAnimal} (${srcDose} mg/kg)\nTarget: ${tgtAnimal} (${tgtDose} mg/kg)`;
     }
-}
 
-/**
- * Apply predefined scientific preset
- */
-function applyPreset(presetType) {
-    switch (presetType) {
-        case "mouse_10_human":
-            switchToTab("tab-a2h");
-            setValue("a2h_animal", "mouse");
-            setValue("a2h_dose", "10.0");
-            setValue("a2h_dose_unit", "mg_kg");
-            setValue("a2h_animal_weight", "20");
-            setValue("a2h_animal_weight_unit", "g");
-            setValue("a2h_human_weight", "60.0");
-            setValue("a2h_safety_factor", "10.0");
-            calculateAnimalToHuman();
-            break;
-        case "rat_50_human":
-            switchToTab("tab-a2h");
-            setValue("a2h_animal", "rat");
-            setValue("a2h_dose", "50.0");
-            setValue("a2h_dose_unit", "mg_kg");
-            setValue("a2h_animal_weight", "150");
-            setValue("a2h_animal_weight_unit", "g");
-            setValue("a2h_human_weight", "60.0");
-            setValue("a2h_safety_factor", "10.0");
-            calculateAnimalToHuman();
-            break;
-        case "human_500_mouse":
-            switchToTab("tab-h2a");
-            setValue("h2a_dose_type", "total_mg");
-            setValue("h2a_human_dose", "500.0");
-            setValue("h2a_human_weight", "60.0");
-            setValue("h2a_target_animal", "mouse");
-            setValue("h2a_animal_weight", "25");
-            setValue("h2a_animal_weight_unit", "g");
-            calculateHumanToAnimal();
-            break;
-        case "rabbit_20_rat":
-            switchToTab("tab-a2a");
-            setValue("a2a_source_animal", "rabbit");
-            setValue("a2a_source_dose", "20.0");
-            setValue("a2a_target_animal", "rat");
-            setValue("a2a_target_weight", "200");
-            setValue("a2a_target_weight_unit", "g");
-            calculateAnimalToAnimal();
-            break;
-        case "dog_10_human":
-            switchToTab("tab-a2h");
-            setValue("a2h_animal", "dog");
-            setValue("a2h_dose", "10.0");
-            setValue("a2h_dose_unit", "mg_kg");
-            setValue("a2h_animal_weight", "10");
-            setValue("a2h_animal_weight_unit", "kg");
-            setValue("a2h_human_weight", "60.0");
-            setValue("a2h_safety_factor", "6.0");
-            calculateAnimalToHuman();
-            break;
-        case "cohort_mouse_study":
-            switchToTab("tab-cohort");
-            setValue("ch_species", "mouse");
-            setValue("ch_dose", "10.0");
-            setValue("ch_count", "10");
-            setValue("ch_avg_weight", "22");
-            setValue("ch_weight_unit", "g");
-            setValue("ch_freq", "1");
-            setValue("ch_days", "14");
-            setValue("ch_waste", "10.0");
-            setValue("ch_conc", "1.0");
-            calculateCohort();
-            break;
-    }
-}
-
-function switchToTab(tabId) {
-    const tabTrigger = document.querySelector(`[data-bs-target="#${tabId}"]`);
-    if (tabTrigger) {
-        const tab = new bootstrap.Tab(tabTrigger);
-        tab.show();
-    }
-}
-
-/**
- * Copies text to clipboard with notification feedback
- */
-function copyToClipboard(text, triggerBtn) {
-    navigator.clipboard.writeText(text).then(() => {
-        if (triggerBtn) {
-            const originalHTML = triggerBtn.innerHTML;
-            triggerBtn.innerHTML = `<i class="bi bi-check2"></i> Copied!`;
-            setTimeout(() => {
-                triggerBtn.innerHTML = originalHTML;
-            }, 1800);
+    navigator.clipboard.writeText(copyText).then(() => {
+        const toastEl = document.getElementById("copyToast");
+        if (toastEl && window.bootstrap) {
+            const toast = new bootstrap.Toast(toastEl, { delay: 2500 });
+            toast.show();
         }
     }).catch(err => {
-        console.error("Clipboard copy failed:", err);
+        console.error("Failed to copy:", err);
     });
-}
-
-function copyA2HSteps(btn) {
-    const stepsEl = document.getElementById("a2h_steps_list");
-    if (stepsEl) copyToClipboard(stepsEl.innerText, btn);
-}
-
-function copyH2ASteps(btn) {
-    const stepsEl = document.getElementById("h2a_steps_list");
-    if (stepsEl) copyToClipboard(stepsEl.innerText, btn);
-}
-
-function copyCohortSummary(btn) {
-    const textEl = document.getElementById("ch_summary_text");
-    if (textEl) copyToClipboard(textEl.innerText, btn);
-}
-
-// Mobile Floating Bar & Smooth Scroll
-function updateMobileFloatingBar(label, value) {
-    setText("mobile_bar_label", label);
-    setText("mobile_bar_val", value);
-}
-
-function scrollToResultCard() {
-    const activeTabPane = document.querySelector(".tab-pane.active");
-    if (activeTabPane) {
-        const resultCard = activeTabPane.querySelector(".result-card-primary");
-        if (resultCard) {
-            resultCard.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-    }
 }
 
 // Helpers
 function setText(id, text) {
     const el = document.getElementById(id);
     if (el) el.innerText = text;
-}
-
-function setValue(id, val) {
-    const el = document.getElementById(id);
-    if (el) el.value = val;
-}
-
-function renderSteps(containerId, steps) {
-    const el = document.getElementById(containerId);
-    if (!el) return;
-    el.innerHTML = steps.map(s => `<div class="step-item">${s}</div>`).join("");
 }
 
 function getSpeciesName(spId) {
@@ -754,6 +498,5 @@ function getSpeciesName(spId) {
         mini_pig: "Miniature Swine",
         micro_pig: "Micro-pig"
     };
-    return names[spId] || spId.toUpperCase();
+    return names[spId] || spId;
 }
-
