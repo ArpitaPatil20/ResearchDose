@@ -163,16 +163,16 @@ If you want the website to be online 24/7 without keeping your computer running:
 
 ## 📄 Copyright & License
 
-**Copyright &copy; 2026 Atharv Kanase / ResearchDose. All Rights Reserved.**
+**Copyright &copy; 2026 Atharv Sagar Kanase / ResearchDose. All Rights Reserved.**
 
-This platform, including its calculation engine, responsive scientific interface, verified animal species datasets, and automated cohort scaling modules, is designed and developed by **Atharv Kanase**.
+This platform, including its calculation engine, responsive scientific interface, verified animal species datasets, and automated cohort scaling modules, is designed and developed by **Atharv Sagar Kanase**.
 
 - **License**: Released under the [MIT License](LICENSE) for research, academic, and scientific education.
 - **Scientific Attribution**: Reference $K_m$ factors and body weights are standardized from US FDA CDER (2005) guidance, Reagan-Shaw et al. (2008), and Janhavi et al. (2022).
 - **Academic Citation**:
   ```bibtex
   @software{researchdose2026,
-    author = {Atharv Kanase},
+    author = {Atharv Sagar Kanase},
     title = {ResearchDose: Preclinical Interspecies Dose Conversion & Research Platform},
     year = {2026},
     url = {https://github.com/AtharvKanase/ResearchDose}
