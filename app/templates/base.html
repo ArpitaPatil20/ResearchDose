@@ -39,9 +39,29 @@
                 <span class="fw-bold fs-5 tracking-tight text-white">Research<span class="text-primary">Dose</span></span>
                 <span class="brand-badge ms-1 d-none d-sm-inline-block">Preclinical v1.0</span>
             </a>
+
+            <!-- Header Action Controls: ALWAYS visible on Mobile and Desktop -->
+            <div class="d-flex align-items-center gap-2 order-lg-last ms-auto me-2 me-lg-0">
+                <!-- PWA Install Button (Always visible on mobile & desktop) -->
+                <button id="btnInstallPwa" class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1 py-1 px-2 px-sm-3 shadow-sm rounded-pill fw-semibold" type="button" title="Install ResearchDose as an App on your phone or PC">
+                    <i class="bi bi-cloud-arrow-down-fill"></i>
+                    <span>Install App</span>
+                </button>
+                <!-- Connectivity Status Badge -->
+                <span id="networkStatusBadge" class="badge bg-success-subtle text-success border border-success-subtle d-flex align-items-center gap-1 px-2 py-1" title="Real-time connectivity status">
+                    <span id="networkStatusDot" class="spinner-grow spinner-grow-sm text-success" style="width: 0.45rem; height: 0.45rem;" role="status"></span>
+                    <span id="networkStatusText" class="d-none d-sm-inline">Online</span>
+                </span>
+                <span class="badge bg-dark-subtle text-light border border-secondary-subtle d-none d-xl-inline-block px-2 py-1">
+                    FDA 2005 Table 1
+                </span>
+            </div>
+
+            <!-- Hamburger Toggle for Navigation Menu (Mobile) -->
             <button class="navbar-toggler border-0 p-1" type="button" data-bs-toggle="collapse" data-bs-target="#navMain" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
+
             <div class="collapse navbar-collapse" id="navMain">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-3 gap-1">
                     <li class="nav-item">
@@ -57,24 +77,28 @@
                         <a class="nav-link text-light fw-medium" href="/docs" target="_blank"><i class="bi bi-code-slash me-1"></i> API Docs</a>
                     </li>
                 </ul>
-                <div class="d-flex align-items-center gap-2 text-light small">
-                    <!-- PWA Install Button (Interactive) -->
-                    <button id="btnInstallPwa" class="btn btn-sm btn-outline-info d-none align-items-center gap-1 py-1 px-2 shadow-sm rounded-pill" type="button" title="Install ResearchDose as an App on your device">
-                        <i class="bi bi-cloud-arrow-down-fill text-info"></i>
-                        <span class="d-none d-sm-inline fw-semibold">Install App</span>
-                    </button>
-                    <!-- Connectivity Status Badge -->
-                    <span id="networkStatusBadge" class="badge bg-success-subtle text-success border border-success-subtle d-flex align-items-center gap-1 px-2 py-1" title="Real-time connectivity status">
-                        <span id="networkStatusDot" class="spinner-grow spinner-grow-sm text-success" style="width: 0.45rem; height: 0.45rem;" role="status"></span>
-                        <span id="networkStatusText">Online</span>
-                    </span>
-                    <span class="badge bg-dark-subtle text-light border border-secondary-subtle d-none d-md-inline-block px-2 py-1">
-                        FDA 2005 Table 1 Verified
-                    </span>
-                </div>
             </div>
         </div>
     </header>
+
+    <!-- Mobile Quick-Install Banner (Sticky underneath header on mobile) -->
+    <div id="pwaMobileBanner" class="bg-gradient text-white py-2 px-3 d-none align-items-center justify-content-between shadow-sm position-sticky top-0 z-2" style="background-color: #0b2247; border-bottom: 1px solid rgba(56, 189, 248, 0.3);">
+        <div class="d-flex align-items-center gap-2 small">
+            <i class="bi bi-phone text-info fs-5"></i>
+            <div>
+                <strong class="d-block" style="font-size: 0.88rem;">Install ResearchDose App</strong>
+                <span class="text-white-50" style="font-size: 0.76rem;">One-tap install &bull; Works 100% offline in lab</span>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <button id="btnBannerInstall" type="button" class="btn btn-sm btn-info text-dark fw-bold px-3 py-1 rounded-pill">
+                Install
+            </button>
+            <button id="btnBannerClose" type="button" class="btn btn-sm text-white-50 p-1" aria-label="Dismiss banner">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+    </div>
 
     <main class="container py-4 flex-grow-1">
         {% block content %}{% endblock %}
@@ -134,6 +158,35 @@
                     <div class="alert alert-primary py-2 px-3 small mb-0 d-flex align-items-center gap-2">
                         <i class="bi bi-lightning-charge-fill text-warning"></i>
                         <span>Once installed, it opens instantly in full-screen and works offline!</span>
+                    </div>
+                </div>
+                <div class="modal-footer py-2 border-top border-light-subtle">
+                    <button type="button" class="btn btn-sm btn-primary" data-bs-dismiss="modal">Got it</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Android / General PWA Install Instructions Modal -->
+    <div class="modal fade" id="androidInstallModal" tabindex="-1" aria-labelledby="androidInstallModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-dark text-white border-bottom border-secondary">
+                    <h5 class="modal-title fs-6 d-flex align-items-center gap-2" id="androidInstallModalLabel">
+                        <i class="bi bi-android2 text-success"></i> Install ResearchDose on Android
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-dark py-3">
+                    <p class="mb-3">To install ResearchDose directly on your Android phone:</p>
+                    <ol class="small text-secondary ps-3 mb-3">
+                        <li class="mb-2">Tap the <strong>three dots menu (<i class="bi bi-three-dots-vertical"></i>)</strong> in the top-right corner of Chrome or your browser.</li>
+                        <li class="mb-2">Select <strong>Install app</strong> or <strong>Add to Home screen</strong>.</li>
+                        <li>Tap <strong>Install</strong> when prompted. The app icon will appear on your home screen.</li>
+                    </ol>
+                    <div class="alert alert-success py-2 px-3 small mb-0 d-flex align-items-center gap-2">
+                        <i class="bi bi-shield-check text-success"></i>
+                        <span>Launches in fullscreen mode and runs calculations 100% offline!</span>
                     </div>
                 </div>
                 <div class="modal-footer py-2 border-top border-light-subtle">

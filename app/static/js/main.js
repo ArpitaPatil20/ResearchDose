@@ -532,46 +532,59 @@ function registerServiceWorker() {
 }
 
 /**
- * Sets up beforeinstallprompt and user install actions
+ * Sets up beforeinstallprompt, mobile banner, and user install actions
  */
 function setupPwaInstallPrompt() {
     const installBtn = document.getElementById("btnInstallPwa");
-    if (!installBtn) return;
+    const mobileBanner = document.getElementById("pwaMobileBanner");
+    const bannerInstallBtn = document.getElementById("btnBannerInstall");
+    const bannerCloseBtn = document.getElementById("btnBannerClose");
 
     const isRunningStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
     if (isRunningStandalone) {
         // App is already installed and running standalone
-        installBtn.classList.add("d-none");
+        if (installBtn) installBtn.classList.add("d-none");
+        if (mobileBanner) mobileBanner.classList.add("d-none");
         return;
+    }
+
+    const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 768;
+    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+    // Show Mobile Quick-Install Banner on mobile unless previously dismissed in this session
+    if (isMobileDevice && mobileBanner && !sessionStorage.getItem("dismissed_install_banner")) {
+        mobileBanner.classList.remove("d-none");
+        mobileBanner.classList.add("d-flex");
+    }
+
+    if (bannerCloseBtn && mobileBanner) {
+        bannerCloseBtn.addEventListener("click", () => {
+            mobileBanner.classList.add("d-none");
+            mobileBanner.classList.remove("d-flex");
+            sessionStorage.setItem("dismissed_install_banner", "true");
+        });
     }
 
     // Android, Chrome, Edge beforeinstallprompt event
     window.addEventListener("beforeinstallprompt", (e) => {
-        // Prevent default mini-infobar
         e.preventDefault();
         deferredInstallPrompt = e;
-
-        // Reveal the Install App button
-        installBtn.classList.remove("d-none");
-        installBtn.classList.add("d-inline-flex");
+        if (installBtn) {
+            installBtn.classList.remove("d-none");
+            installBtn.classList.add("d-inline-flex");
+        }
     });
 
-    // iOS Safari detection
-    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    if (isIOSDevice && !isRunningStandalone) {
-        installBtn.classList.remove("d-none");
-        installBtn.classList.add("d-inline-flex");
-    }
-
-    // Button click handler
-    installBtn.addEventListener("click", async () => {
+    // Shared execution function when user taps "Install"
+    async function triggerInstallFlow() {
         if (deferredInstallPrompt) {
-            // Native install prompt (Chrome / Android / Edge)
+            // Direct native Android / Chrome install dialog
             deferredInstallPrompt.prompt();
             const choiceResult = await deferredInstallPrompt.userChoice;
             if (choiceResult.outcome === "accepted") {
                 console.log("[PWA] User accepted the install prompt");
-                installBtn.classList.add("d-none");
+                if (installBtn) installBtn.classList.add("d-none");
+                if (mobileBanner) mobileBanner.classList.add("d-none");
             }
             deferredInstallPrompt = null;
         } else if (isIOSDevice) {
@@ -581,18 +594,32 @@ function setupPwaInstallPrompt() {
                 const modal = new bootstrap.Modal(modalEl);
                 modal.show();
             } else {
-                alert("To install on iOS: Tap Share and select 'Add to Home Screen'.");
+                alert("To install on iOS: Tap Safari's Share button and select 'Add to Home Screen'.");
             }
         } else {
-            // General desktop fallback info
-            alert("To install ResearchDose: Click the install icon in your browser's address bar (or Menu > Install ResearchDose).");
+            // Show Android / General modal instructions
+            const modalEl = document.getElementById("androidInstallModal");
+            if (modalEl && typeof bootstrap !== "undefined") {
+                const modal = new bootstrap.Modal(modalEl);
+                modal.show();
+            } else {
+                alert("To install ResearchDose: Tap browser menu (three dots) > 'Install app' or 'Add to Home screen'.");
+            }
         }
-    });
+    }
+
+    if (installBtn) {
+        installBtn.addEventListener("click", triggerInstallFlow);
+    }
+    if (bannerInstallBtn) {
+        bannerInstallBtn.addEventListener("click", triggerInstallFlow);
+    }
 
     // Listen for successful installation
     window.addEventListener("appinstalled", () => {
         console.log("[PWA] ResearchDose installed successfully!");
-        installBtn.classList.add("d-none");
+        if (installBtn) installBtn.classList.add("d-none");
+        if (mobileBanner) mobileBanner.classList.add("d-none");
         deferredInstallPrompt = null;
     });
 }
