@@ -8,6 +8,19 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="format-detection" content="telephone=no">
     <title>{% block title %}ResearchDose — Scientific Dose Conversion Platform{% endblock %}</title>
+
+    <!-- Progressive Web App (PWA) Manifest & Meta Tags -->
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32x32.png">
+    <link rel="icon" type="image/svg+xml" href="/static/icons/icon.svg">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/icons/apple-touch-icon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="ResearchDose">
+    <meta name="application-name" content="ResearchDose">
+    <meta name="msapplication-TileColor" content="#0a0f1d">
+    <meta name="msapplication-TileImage" content="/static/icons/icon-192x192.png">
+
     <!-- Modern Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -45,8 +58,17 @@
                     </li>
                 </ul>
                 <div class="d-flex align-items-center gap-2 text-light small">
-                    <span class="badge bg-success-subtle text-success border border-success-subtle d-flex align-items-center gap-1 px-2 py-1">
-                        <span class="spinner-grow spinner-grow-sm text-success" style="width: 0.5rem; height: 0.5rem;" role="status"></span>
+                    <!-- PWA Install Button (Interactive) -->
+                    <button id="btnInstallPwa" class="btn btn-sm btn-outline-info d-none align-items-center gap-1 py-1 px-2 shadow-sm rounded-pill" type="button" title="Install ResearchDose as an App on your device">
+                        <i class="bi bi-cloud-arrow-down-fill text-info"></i>
+                        <span class="d-none d-sm-inline fw-semibold">Install App</span>
+                    </button>
+                    <!-- Connectivity Status Badge -->
+                    <span id="networkStatusBadge" class="badge bg-success-subtle text-success border border-success-subtle d-flex align-items-center gap-1 px-2 py-1" title="Real-time connectivity status">
+                        <span id="networkStatusDot" class="spinner-grow spinner-grow-sm text-success" style="width: 0.45rem; height: 0.45rem;" role="status"></span>
+                        <span id="networkStatusText">Online</span>
+                    </span>
+                    <span class="badge bg-dark-subtle text-light border border-secondary-subtle d-none d-md-inline-block px-2 py-1">
                         FDA 2005 Table 1 Verified
                     </span>
                 </div>
@@ -91,6 +113,41 @@
             </div>
         </div>
     </footer>
+
+    <!-- iOS PWA Install Instructions Modal -->
+    <div class="modal fade" id="iosInstallModal" tabindex="-1" aria-labelledby="iosInstallModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-dark text-white border-bottom border-secondary">
+                    <h5 class="modal-title fs-6 d-flex align-items-center gap-2" id="iosInstallModalLabel">
+                        <i class="bi bi-apple text-info"></i> Install ResearchDose on iPhone / iPad
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-dark py-3">
+                    <p class="mb-3">To install ResearchDose on iOS Safari without an App Store download:</p>
+                    <ol class="small text-secondary ps-3 mb-3">
+                        <li class="mb-2">Tap the <strong>Share</strong> button <i class="bi bi-box-arrow-up text-primary fs-6"></i> in Safari's bottom toolbar.</li>
+                        <li class="mb-2">Scroll down and tap <strong>Add to Home Screen</strong> <i class="bi bi-plus-square text-success fs-6"></i>.</li>
+                        <li>Tap <strong>Add</strong> at top right. The ResearchDose icon will appear on your home screen.</li>
+                    </ol>
+                    <div class="alert alert-primary py-2 px-3 small mb-0 d-flex align-items-center gap-2">
+                        <i class="bi bi-lightning-charge-fill text-warning"></i>
+                        <span>Once installed, it opens instantly in full-screen and works offline!</span>
+                    </div>
+                </div>
+                <div class="modal-footer py-2 border-top border-light-subtle">
+                    <button type="button" class="btn btn-sm btn-primary" data-bs-dismiss="modal">Got it</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Offline Mode Notice Banner -->
+    <div id="pwaOfflineToast" class="position-fixed bottom-0 start-50 translate-middle-x mb-3 p-2 bg-dark text-white rounded-pill shadow-lg border border-warning d-none align-items-center gap-2 px-3 z-3" style="font-size: 0.85rem;">
+        <span class="spinner-grow spinner-grow-sm text-warning" style="width: 0.45rem; height: 0.45rem;"></span>
+        <span>Offline Mode Active — Preclinical calculations running locally</span>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/static/js/main.js"></script>

@@ -1,0 +1,101 @@
+{
+  "id": "/?source=pwa",
+  "name": "ResearchDose — Scientific Preclinical Dose Converter",
+  "short_name": "ResearchDose",
+  "description": "Scientific preclinical interspecies dose conversion, Body Surface Area (Km) scaling, and pharmacological research platform.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "background_color": "#0a0f1d",
+  "theme_color": "#0a0f1d",
+  "orientation": "any",
+  "lang": "en-US",
+  "dir": "ltr",
+  "categories": [
+    "medical",
+    "education",
+    "productivity",
+    "utilities"
+  ],
+  "icons": [
+    {
+      "src": "/static/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/icon-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/static/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Animal to Human (MRSD)",
+      "short_name": "Animal → Human",
+      "description": "Convert animal dose to Human Equivalent Dose (HED) and clinical MRSD",
+      "url": "/#mode-a2h",
+      "icons": [
+        {
+          "src": "/static/icons/icon-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Human to Animal Translation",
+      "short_name": "Human → Animal",
+      "description": "Translate clinical human dose into animal equivalents",
+      "url": "/#mode-h2a",
+      "icons": [
+        {
+          "src": "/static/icons/icon-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Formulation & Injection Volume",
+      "short_name": "Formulation",
+      "description": "Calculate dosing volume and check welfare route safety thresholds",
+      "url": "/#mode-formulation",
+      "icons": [
+        {
+          "src": "/static/icons/icon-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Animal Cohort Study Planner",
+      "short_name": "Cohort Planner",
+      "description": "Compute active drug mass and volumes for experimental cohorts",
+      "url": "/#mode-cohort",
+      "icons": [
+        {
+          "src": "/static/icons/icon-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}

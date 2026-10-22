@@ -125,6 +125,17 @@ This generates an instant, secure HTTPS public URL (e.g., `https://harbor-gdp-to
 
 ---
 
+## 📱 Progressive Web App (PWA) & Mobile Installation
+
+ResearchDose is a full Progressive Web App. You can install it directly onto your **Android phone, iPhone, iPad, Windows PC, or Mac** as a standalone application:
+
+- **Android (Chrome / Edge / Firefox)**: Tap the **"Install App"** button in the navbar, or open browser menu ($\vdots$) and tap **"Install App"** / **"Add to Home screen"**.
+- **iOS / iPadOS (Safari)**: Tap the **Share** button ($\boxuparrow$), scroll down and tap **"Add to Home Screen"** ($\boxplus$), then tap **Add**.
+- **Windows / Mac (Chrome / Edge)**: Click the **Install** icon in the browser address bar or click **"Install App"** in the top navbar.
+- **Offline Mode**: Calculations, species datasets, and formula engines are cached locally by the Service Worker, allowing dose conversions to run even in vivariums or laboratory basements without an internet connection.
+
+---
+
 ## Deploying Permanently to the Cloud (Free)
 
 If you want the website to be online 24/7 without keeping your computer running:

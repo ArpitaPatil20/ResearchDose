@@ -1,4 +1,5 @@
 @echo off
+cd /d "%~dp0"
 title ResearchDose - Public Shareable Server
 echo ========================================================
 echo   ResearchDose - Starting Local Server & Public Tunnel
@@ -8,13 +9,14 @@ echo.
 :: Check if virtual environment exists
 if not exist "venv\Scripts\python.exe" (
     echo Error: Python virtual environment not found in venv\
+    echo Please make sure you are in the project folder.
     pause
     exit /b 1
 )
 
 :: Start Uvicorn in the background if not already running
 echo [1/2] Starting ResearchDose backend on http://127.0.0.1:8000 ...
-start /B venv\Scripts\python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+start "ResearchDose Backend" /B venv\Scripts\python.exe -m uvicorn app.main:app --host 0.0.0.0 --port 8000
 
 :: Wait 2 seconds for server initialization
 timeout /t 2 /nobreak >nul

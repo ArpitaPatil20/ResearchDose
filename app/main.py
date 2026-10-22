@@ -6,6 +6,7 @@ Main FastAPI application entry point.
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -54,6 +55,37 @@ app.add_middleware(
 # Mount static files directory if present
 if (settings.APP_DIR / "static").exists():
     app.mount("/static", StaticFiles(directory=str(settings.APP_DIR / "static")), name="static")
+
+
+@app.get("/manifest.json", include_in_schema=False)
+async def pwa_manifest():
+    """Serves the Progressive Web App manifest."""
+    manifest_path = settings.APP_DIR / "static" / "manifest.json"
+    if manifest_path.exists():
+        return FileResponse(manifest_path, media_type="application/manifest+json")
+    raise HTTPException(status_code=404, detail="PWA manifest not found")
+
+
+@app.get("/sw.js", include_in_schema=False)
+async def pwa_service_worker():
+    """Serves the PWA Service Worker with root scope permissions."""
+    sw_path = settings.APP_DIR / "static" / "sw.js"
+    if sw_path.exists():
+        return FileResponse(
+            sw_path,
+            media_type="application/javascript",
+            headers={"Service-Worker-Allowed": "/"},
+        )
+    raise HTTPException(status_code=404, detail="Service worker not found")
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    """Serves the application favicon."""
+    icon_path = settings.APP_DIR / "static" / "icons" / "favicon.ico"
+    if icon_path.exists():
+        return FileResponse(icon_path, media_type="image/x-icon")
+    raise HTTPException(status_code=404, detail="Favicon not found")
 
 
 @app.get("/", tags=["UI"])

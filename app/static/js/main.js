@@ -61,6 +61,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     setupEventListeners();
+    initPWA();
     calculateAnimalToHuman();
     calculateHumanToAnimal();
     calculateAnimalToAnimal();
@@ -500,3 +501,143 @@ function getSpeciesName(spId) {
     };
     return names[spId] || spId;
 }
+
+// ==========================================
+// Progressive Web App (PWA) Support Engine
+// ==========================================
+let deferredInstallPrompt = null;
+
+function initPWA() {
+    registerServiceWorker();
+    setupPwaInstallPrompt();
+    setupNetworkStatusMonitoring();
+}
+
+/**
+ * Registers the Service Worker for offline capability
+ */
+function registerServiceWorker() {
+    if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+            navigator.serviceWorker
+                .register("/sw.js", { scope: "/" })
+                .then((registration) => {
+                    console.log("[PWA] Service Worker registered successfully with scope:", registration.scope);
+                })
+                .catch((error) => {
+                    console.warn("[PWA] Service Worker registration failed:", error);
+                });
+        });
+    }
+}
+
+/**
+ * Sets up beforeinstallprompt and user install actions
+ */
+function setupPwaInstallPrompt() {
+    const installBtn = document.getElementById("btnInstallPwa");
+    if (!installBtn) return;
+
+    const isRunningStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+    if (isRunningStandalone) {
+        // App is already installed and running standalone
+        installBtn.classList.add("d-none");
+        return;
+    }
+
+    // Android, Chrome, Edge beforeinstallprompt event
+    window.addEventListener("beforeinstallprompt", (e) => {
+        // Prevent default mini-infobar
+        e.preventDefault();
+        deferredInstallPrompt = e;
+
+        // Reveal the Install App button
+        installBtn.classList.remove("d-none");
+        installBtn.classList.add("d-inline-flex");
+    });
+
+    // iOS Safari detection
+    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    if (isIOSDevice && !isRunningStandalone) {
+        installBtn.classList.remove("d-none");
+        installBtn.classList.add("d-inline-flex");
+    }
+
+    // Button click handler
+    installBtn.addEventListener("click", async () => {
+        if (deferredInstallPrompt) {
+            // Native install prompt (Chrome / Android / Edge)
+            deferredInstallPrompt.prompt();
+            const choiceResult = await deferredInstallPrompt.userChoice;
+            if (choiceResult.outcome === "accepted") {
+                console.log("[PWA] User accepted the install prompt");
+                installBtn.classList.add("d-none");
+            }
+            deferredInstallPrompt = null;
+        } else if (isIOSDevice) {
+            // Show iOS modal instructions
+            const modalEl = document.getElementById("iosInstallModal");
+            if (modalEl && typeof bootstrap !== "undefined") {
+                const modal = new bootstrap.Modal(modalEl);
+                modal.show();
+            } else {
+                alert("To install on iOS: Tap Share and select 'Add to Home Screen'.");
+            }
+        } else {
+            // General desktop fallback info
+            alert("To install ResearchDose: Click the install icon in your browser's address bar (or Menu > Install ResearchDose).");
+        }
+    });
+
+    // Listen for successful installation
+    window.addEventListener("appinstalled", () => {
+        console.log("[PWA] ResearchDose installed successfully!");
+        installBtn.classList.add("d-none");
+        deferredInstallPrompt = null;
+    });
+}
+
+/**
+ * Monitors and displays network status (Online / Offline mode)
+ */
+function setupNetworkStatusMonitoring() {
+    const badge = document.getElementById("networkStatusBadge");
+    const textEl = document.getElementById("networkStatusText");
+    const dotEl = document.getElementById("networkStatusDot");
+    const offlineToast = document.getElementById("pwaOfflineToast");
+
+    function updateStatus(isOnline) {
+        if (!badge || !textEl || !dotEl) return;
+
+        if (isOnline) {
+            badge.className = "badge bg-success-subtle text-success border border-success-subtle d-flex align-items-center gap-1 px-2 py-1";
+            dotEl.className = "spinner-grow spinner-grow-sm text-success";
+            textEl.textContent = "Online";
+            if (offlineToast) {
+                offlineToast.classList.add("d-none");
+                offlineToast.classList.remove("d-flex");
+            }
+        } else {
+            badge.className = "badge bg-warning-subtle text-warning border border-warning-subtle d-flex align-items-center gap-1 px-2 py-1";
+            dotEl.className = "spinner-grow spinner-grow-sm text-warning";
+            textEl.textContent = "Offline Mode";
+            if (offlineToast) {
+                offlineToast.classList.remove("d-none");
+                offlineToast.classList.add("d-flex");
+                setTimeout(() => {
+                    if (offlineToast) {
+                        offlineToast.classList.add("d-none");
+                        offlineToast.classList.remove("d-flex");
+                    }
+                }, 4500);
+            }
+        }
+    }
+
+    window.addEventListener("online", () => updateStatus(true));
+    window.addEventListener("offline", () => updateStatus(false));
+
+    // Initial check
+    updateStatus(navigator.onLine);
+}
+
