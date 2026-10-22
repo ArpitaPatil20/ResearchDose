@@ -173,24 +173,41 @@
             <div class="modal-content border-0 shadow-lg">
                 <div class="modal-header bg-dark text-white border-bottom border-secondary">
                     <h5 class="modal-title fs-6 d-flex align-items-center gap-2" id="androidInstallModalLabel">
-                        <i class="bi bi-android2 text-success"></i> Install ResearchDose on Android
+                        <i class="bi bi-download text-primary"></i> How to Install ResearchDose
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body text-dark py-3">
-                    <p class="mb-3">To install ResearchDose directly on your Android phone:</p>
-                    <ol class="small text-secondary ps-3 mb-3">
-                        <li class="mb-2">Tap the <strong>three dots menu (<i class="bi bi-three-dots-vertical"></i>)</strong> in the top-right corner of Chrome or your browser.</li>
-                        <li class="mb-2">Select <strong>Install app</strong> or <strong>Add to Home screen</strong>.</li>
-                        <li>Tap <strong>Install</strong> when prompted. The app icon will appear on your home screen.</li>
-                    </ol>
+                    <div class="alert alert-info py-2 px-3 small mb-3">
+                        <i class="bi bi-info-circle me-1"></i>
+                        For your security, web browsers require you to confirm installation directly from the browser menu or address bar:
+                    </div>
+
+                    <div class="mb-3">
+                        <h6 class="fw-bold fs-7 text-dark mb-1"><i class="bi bi-phone text-primary me-1"></i> On Android (Google Chrome):</h6>
+                        <ol class="small text-secondary ps-3 mb-0">
+                            <li>Tap the <strong>three dots (<i class="bi bi-three-dots-vertical"></i>)</strong> in the top-right corner of Chrome.</li>
+                            <li>Tap <strong>Install app</strong> or <strong>Add to Home screen</strong>.</li>
+                            <li>Tap <strong>Install</strong> to confirm.</li>
+                        </ol>
+                    </div>
+
+                    <div class="mb-3">
+                        <h6 class="fw-bold fs-7 text-dark mb-1"><i class="bi bi-laptop text-primary me-1"></i> On PC / Laptop (Chrome / Edge):</h6>
+                        <ol class="small text-secondary ps-3 mb-0">
+                            <li>Look at the right side of your <strong>browser URL address bar</strong> at the top.</li>
+                            <li>Click the <strong>Install icon (<i class="bi bi-box-arrow-in-down"></i> or <i class="bi bi-display"></i>)</strong>.</li>
+                            <li>Click <strong>Install</strong> to add ResearchDose to your desktop & taskbar.</li>
+                        </ol>
+                    </div>
+
                     <div class="alert alert-success py-2 px-3 small mb-0 d-flex align-items-center gap-2">
-                        <i class="bi bi-shield-check text-success"></i>
-                        <span>Launches in fullscreen mode and runs calculations 100% offline!</span>
+                        <i class="bi bi-shield-check text-success fs-5"></i>
+                        <span>Once installed, it opens in full-screen and runs calculations 100% offline!</span>
                     </div>
                 </div>
                 <div class="modal-footer py-2 border-top border-light-subtle">
-                    <button type="button" class="btn btn-sm btn-primary" data-bs-dismiss="modal">Got it</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Close Guide</button>
                 </div>
             </div>
         </div>

@@ -1,5 +1,5 @@
 {
-  "id": "/?source=pwa",
+  "id": "/",
   "name": "ResearchDose — Scientific Preclinical Dose Converter",
   "short_name": "ResearchDose",
   "description": "Scientific preclinical interspecies dose conversion, Body Surface Area (Km) scaling, and pharmacological research platform.",
@@ -36,12 +36,6 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
-    },
-    {
-      "src": "/static/icons/icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
     }
   ],
   "shortcuts": [
